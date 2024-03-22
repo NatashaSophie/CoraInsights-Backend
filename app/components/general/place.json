@@ -1,0 +1,22 @@
+{
+  "collectionName": "components_general_places",
+  "info": {
+    "name": "Place",
+    "icon": "location-arrow",
+    "description": ""
+  },
+  "options": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "location": {
+      "type": "component",
+      "repeatable": false,
+      "component": "general.location",
+      "required": true
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "kind": "collectionType",
+  "collectionName": "certificates",
+  "info": {
+    "name": "certificate",
+    "description": ""
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "code": {
+      "type": "uid",
+      "required": false
+    },
+    "trail": {
+      "via": "certificate",
+      "model": "trails"
+    },
+    "file": {
+      "type": "richtext",
+      "required": false
+    }
+  }
+}

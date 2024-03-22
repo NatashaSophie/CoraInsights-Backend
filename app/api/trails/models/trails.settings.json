@@ -1,0 +1,49 @@
+{
+  "kind": "collectionType",
+  "collectionName": "trails",
+  "info": {
+    "name": "trails",
+    "description": ""
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "user": {
+      "plugin": "users-permissions",
+      "model": "user",
+      "via": "trails"
+    },
+    "inversePaths": {
+      "type": "boolean",
+      "default": false,
+      "required": true
+    },
+    "modality": {
+      "type": "enumeration",
+      "enum": [
+        "foot",
+        "bike"
+      ],
+      "required": true
+    },
+    "finishedAt": {
+      "type": "datetime"
+    },
+    "startedAt": {
+      "type": "datetime",
+      "required": true
+    },
+    "routes": {
+      "via": "trail",
+      "collection": "trail-route"
+    },
+    "certificate": {
+      "via": "trail",
+      "model": "certificate"
+    }
+  }
+}

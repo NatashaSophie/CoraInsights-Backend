@@ -1,0 +1,29 @@
+{
+  "kind": "collectionType",
+  "collectionName": "trail_routes",
+  "info": {
+    "name": "TrailRoute",
+    "description": ""
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "trail": {
+      "via": "routes",
+      "model": "trails"
+    },
+    "finishedAt": {
+      "type": "datetime"
+    },
+    "trackedPath": {
+      "type": "json"
+    },
+    "route": {
+      "model": "trail-parts"
+    }
+  }
+}

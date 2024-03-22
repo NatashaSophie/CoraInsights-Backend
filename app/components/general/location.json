@@ -1,0 +1,18 @@
+{
+  "collectionName": "components_general_locations",
+  "info": {
+    "name": "location",
+    "icon": "map-marked"
+  },
+  "options": {},
+  "attributes": {
+    "x": {
+      "type": "float",
+      "required": true
+    },
+    "y": {
+      "type": "float",
+      "required": true
+    }
+  }
+}
