@@ -1,52 +1,53 @@
 {
-  "routes": [
-    {
-      "method": "GET",
-      "path": "/certificates",
-      "handler": "certificate.find",
-      "config": {
-        "policies": []
-      }
-    },
-    {
-      "method": "GET",
-      "path": "/certificates/count",
-      "handler": "certificate.count",
-      "config": {
-        "policies": []
-      }
-    },
-    {
-      "method": "GET",
-      "path": "/certificates/:id",
-      "handler": "certificate.findOne",
-      "config": {
-        "policies": []
-      }
-    },
-    {
-      "method": "POST",
-      "path": "/certificates",
-      "handler": "certificate.create",
-      "config": {
-        "policies": []
-      }
-    },
-    {
-      "method": "PUT",
-      "path": "/certificates/:id",
-      "handler": "certificate.update",
-      "config": {
-        "policies": []
-      }
-    },
-    {
-      "method": "DELETE",
-      "path": "/certificates/:id",
-      "handler": "certificate.delete",
-      "config": {
-        "policies": []
-      }
-    }
-  ]
+	"routes": [
+		{
+			"method": "GET",
+			"path": "/certificates",
+			"handler": "certificate.find",
+			"config": {
+				"policies": [],
+				"description": "Find all certificates. Certificates: Ao final do percurso, o usuário poderá solicitar a geração do certificado de conclusão em formato PDF."
+			}
+		},
+		{
+			"method": "GET",
+			"path": "/certificates/count",
+			"handler": "certificate.count",
+			"config": {
+				"policies": []
+			}
+		},
+		{
+			"method": "GET",
+			"path": "/certificates/:id",
+			"handler": "certificate.findOne",
+			"config": {
+				"policies": []
+			}
+		},
+		{
+			"method": "POST",
+			"path": "/certificates",
+			"handler": "certificate.create",
+			"config": {
+				"policies": []
+			}
+		},
+		{
+			"method": "PUT",
+			"path": "/certificates/:id",
+			"handler": "certificate.update",
+			"config": {
+				"policies": []
+			}
+		},
+		{
+			"method": "DELETE",
+			"path": "/certificates/:id",
+			"handler": "certificate.delete",
+			"config": {
+				"policies": []
+			}
+		}
+	]
 }

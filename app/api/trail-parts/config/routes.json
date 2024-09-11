@@ -1,52 +1,53 @@
 {
-  "routes": [
-    {
-      "method": "GET",
-      "path": "/trail-parts",
-      "handler": "trail-parts.find",
-      "config": {
-        "policies": []
-      }
-    },
-    {
-      "method": "GET",
-      "path": "/trail-parts/count",
-      "handler": "trail-parts.count",
-      "config": {
-        "policies": []
-      }
-    },
-    {
-      "method": "GET",
-      "path": "/trail-parts/:id",
-      "handler": "trail-parts.findOne",
-      "config": {
-        "policies": []
-      }
-    },
-    {
-      "method": "POST",
-      "path": "/trail-parts",
-      "handler": "trail-parts.create",
-      "config": {
-        "policies": []
-      }
-    },
-    {
-      "method": "PUT",
-      "path": "/trail-parts/:id",
-      "handler": "trail-parts.update",
-      "config": {
-        "policies": []
-      }
-    },
-    {
-      "method": "DELETE",
-      "path": "/trail-parts/:id",
-      "handler": "trail-parts.delete",
-      "config": {
-        "policies": []
-      }
-    }
-  ]
+	"routes": [
+		{
+			"method": "GET",
+			"path": "/trail-parts",
+			"handler": "trail-parts.find",
+			"config": {
+				"policies": [],
+				"description": "Find all trail-parts. Trail Parts: Todas as trilhas/trechos cadastrados no sistema."
+			}
+		},
+		{
+			"method": "GET",
+			"path": "/trail-parts/count",
+			"handler": "trail-parts.count",
+			"config": {
+				"policies": []
+			}
+		},
+		{
+			"method": "GET",
+			"path": "/trail-parts/:id",
+			"handler": "trail-parts.findOne",
+			"config": {
+				"policies": []
+			}
+		},
+		{
+			"method": "POST",
+			"path": "/trail-parts",
+			"handler": "trail-parts.create",
+			"config": {
+				"policies": []
+			}
+		},
+		{
+			"method": "PUT",
+			"path": "/trail-parts/:id",
+			"handler": "trail-parts.update",
+			"config": {
+				"policies": []
+			}
+		},
+		{
+			"method": "DELETE",
+			"path": "/trail-parts/:id",
+			"handler": "trail-parts.delete",
+			"config": {
+				"policies": []
+			}
+		}
+	]
 }

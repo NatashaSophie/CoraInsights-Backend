@@ -1,0 +1,49 @@
+version: "3"
+services:
+  strapi:
+    image: strapi/strapi
+    networks:
+      - local
+    build: 
+      context: ./app
+      dockerfile: Dockerfile.prod
+    env_file:
+      - .env
+    environment:
+      DATABASE_CLIENT: ${DATABASE_CLIENT}
+      DATABASE_NAME: ${DATABASE_NAME}
+      DATABASE_HOST: ${DATABASE_HOST}
+      DATABASE_PORT: ${DATABASE_PORT}
+      DATABASE_USERNAME: ${DATABASE_USERNAME}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      DATABASE_SSL: ${DATABASE_SSL}
+    volumes:
+      - ./app:/srv/app
+    ports:
+      - ${PORT}:${PORT}
+    depends_on:
+      - caminho-de-cora-db
+
+  caminho-de-cora-db:
+    image: postgres:16.3
+    container_name: caminho-de-cora-db
+    networks:
+      - local
+    env_file:
+      - .env.prod
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_USER: ${DATABASE_USERNAME}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+    ports:
+      - ${DATABASE_PORT}:${DATABASE_PORT}
+    volumes:
+      - caminho-de-cora-db:/var/lib/postgresql/data/ # Volume
+      #- ./data:/var/lib/postgresql/data/ # Folder
+    command: -p ${DATABASE_PORT}
+volumes:
+  caminho-de-cora-db:
+    driver: local
+networks:
+  local:
+    driver: bridge

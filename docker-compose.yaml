@@ -2,27 +2,32 @@ version: "3"
 services:
   strapi:
     image: strapi/strapi
+    env_file:
+      - .env
     environment:
       DATABASE_CLIENT: postgres
       DATABASE_NAME: strapi
       DATABASE_HOST: postgres
-      DATABASE_PORT: 5432
+      DATABASE_PORT: 5435
       DATABASE_USERNAME: strapi
       DATABASE_PASSWORD: strapi
     volumes:
       - ./app:/srv/app
     ports:
-      - "1337:1337"
+      - "8093:8093"
     depends_on:
       - postgres
 
   postgres:
     image: postgres
+    env_file:
+      - .env
     environment:
       POSTGRES_DB: strapi
       POSTGRES_USER: strapi
       POSTGRES_PASSWORD: strapi
     ports:
-      - "5433:5432"
+      - "5435:5435"
     volumes:
       - ./data:/var/lib/postgresql/data
+    command: -p 5435

@@ -1,52 +1,53 @@
 {
-  "routes": [
-    {
-      "method": "GET",
-      "path": "/trail-routes",
-      "handler": "trail-route.find",
-      "config": {
-        "policies": []
-      }
-    },
-    {
-      "method": "GET",
-      "path": "/trail-routes/count",
-      "handler": "trail-route.count",
-      "config": {
-        "policies": []
-      }
-    },
-    {
-      "method": "GET",
-      "path": "/trail-routes/:id",
-      "handler": "trail-route.findOne",
-      "config": {
-        "policies": []
-      }
-    },
-    {
-      "method": "POST",
-      "path": "/trail-routes",
-      "handler": "trail-route.create",
-      "config": {
-        "policies": []
-      }
-    },
-    {
-      "method": "PUT",
-      "path": "/trail-routes/:id",
-      "handler": "trail-route.update",
-      "config": {
-        "policies": []
-      }
-    },
-    {
-      "method": "DELETE",
-      "path": "/trail-routes/:id",
-      "handler": "trail-route.delete",
-      "config": {
-        "policies": []
-      }
-    }
-  ]
+	"routes": [
+		{
+			"method": "GET",
+			"path": "/trail-routes",
+			"handler": "trail-route.find",
+			"config": {
+				"policies": [],
+				"description": "Find all trail routes. Trail Routes: Informações do percurso realizado. Ex: Trecho inicial, final, quando foi concluído, etc."
+			}
+		},
+		{
+			"method": "GET",
+			"path": "/trail-routes/count",
+			"handler": "trail-route.count",
+			"config": {
+				"policies": []
+			}
+		},
+		{
+			"method": "GET",
+			"path": "/trail-routes/:id",
+			"handler": "trail-route.findOne",
+			"config": {
+				"policies": []
+			}
+		},
+		{
+			"method": "POST",
+			"path": "/trail-routes",
+			"handler": "trail-route.create",
+			"config": {
+				"policies": []
+			}
+		},
+		{
+			"method": "PUT",
+			"path": "/trail-routes/:id",
+			"handler": "trail-route.update",
+			"config": {
+				"policies": []
+			}
+		},
+		{
+			"method": "DELETE",
+			"path": "/trail-routes/:id",
+			"handler": "trail-route.delete",
+			"config": {
+				"policies": []
+			}
+		}
+	]
 }

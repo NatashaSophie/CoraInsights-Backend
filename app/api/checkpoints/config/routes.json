@@ -1,52 +1,54 @@
 {
-  "routes": [
-    {
-      "method": "GET",
-      "path": "/checkpoints",
-      "handler": "checkpoints.find",
-      "config": {
-        "policies": []
-      }
-    },
-    {
-      "method": "GET",
-      "path": "/checkpoints/count",
-      "handler": "checkpoints.count",
-      "config": {
-        "policies": []
-      }
-    },
-    {
-      "method": "GET",
-      "path": "/checkpoints/:id",
-      "handler": "checkpoints.findOne",
-      "config": {
-        "policies": []
-      }
-    },
-    {
-      "method": "POST",
-      "path": "/checkpoints",
-      "handler": "checkpoints.create",
-      "config": {
-        "policies": []
-      }
-    },
-    {
-      "method": "PUT",
-      "path": "/checkpoints/:id",
-      "handler": "checkpoints.update",
-      "config": {
-        "policies": []
-      }
-    },
-    {
-      "method": "DELETE",
-      "path": "/checkpoints/:id",
-      "handler": "checkpoints.delete",
-      "config": {
-        "policies": []
-      }
-    }
-  ]
+	"routes": [
+		{
+			"method": "GET",
+			"path": "/checkpoints",
+			"handler": "checkpoints.find",
+			"config": {
+				"policies": [],
+				"description": "Find all checkpoints. Checkpoints: Coordenadas de início e fim de cada trecho/ponto do caminho."
+			}
+		},
+		{
+			"method": "GET",
+			"path": "/checkpoints/count",
+			"handler": "checkpoints.count",
+			"config": {
+				"policies": [],
+				"description": "Send an email"
+			}
+		},
+		{
+			"method": "GET",
+			"path": "/checkpoints/:id",
+			"handler": "checkpoints.findOne",
+			"config": {
+				"policies": []
+			}
+		},
+		{
+			"method": "POST",
+			"path": "/checkpoints",
+			"handler": "checkpoints.create",
+			"config": {
+				"policies": []
+			}
+		},
+		{
+			"method": "PUT",
+			"path": "/checkpoints/:id",
+			"handler": "checkpoints.update",
+			"config": {
+				"policies": []
+			}
+		},
+		{
+			"method": "DELETE",
+			"path": "/checkpoints/:id",
+			"handler": "checkpoints.delete",
+			"config": {
+				"policies": []
+			}
+		}
+	]
 }
