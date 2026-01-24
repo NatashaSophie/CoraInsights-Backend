@@ -35,6 +35,31 @@
       "repeatable": false,
       "component": "general.location",
       "required": true
+    },
+    "owner": {
+      "plugin": "users-permissions",
+      "model": "user",
+      "via": "establishments"
+    },
+    "description": {
+      "type": "text"
+    },
+    "openingHours": {
+      "type": "string"
+    },
+    "images": {
+      "collection": "file",
+      "via": "related",
+      "allowedTypes": ["images"],
+      "plugin": "upload",
+      "required": false
+    },
+    "services": {
+      "type": "json"
+    },
+    "isActive": {
+      "type": "boolean",
+      "default": true
     }
   }
 }

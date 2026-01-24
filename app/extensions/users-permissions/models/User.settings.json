@@ -83,9 +83,66 @@
 		"name": {
 			"type": "string"
 		},
+		"nickname": {
+			"type": "string",
+			"minLength": 3,
+			"unique": true,
+			"required": true
+		},
 		"trails": {
 			"via": "user",
 			"collection": "trails"
+		},
+		"userType": {
+			"type": "enumeration",
+			"enum": [
+				"pilgrim",
+				"manager",
+				"merchant"
+			],
+			"default": "pilgrim",
+			"required": true
+		},
+		"merchantApproved": {
+			"type": "boolean",
+			"default": false
+		},
+		"merchantApprovedBy": {
+			"plugin": "users-permissions",
+			"model": "user"
+		},
+		"merchantApprovedAt": {
+			"type": "datetime"
+		},
+		"merchantRejectedReason": {
+			"type": "text"
+		},
+		"organizationType": {
+			"type": "enumeration",
+			"enum": [
+				"government",
+				"trail_management",
+				"none"
+			]
+		},
+		"organizationName": {
+			"type": "string"
+		},
+		"businessName": {
+			"type": "string"
+		},
+		"businessType": {
+			"type": "string"
+		},
+		"businessAddress": {
+			"type": "text"
+		},
+		"businessPhone": {
+			"type": "string"
+		},
+		"establishments": {
+			"via": "owner",
+			"collection": "establishment"
 		}
 	}
 }
