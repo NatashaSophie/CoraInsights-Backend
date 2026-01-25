@@ -1,7 +1,9 @@
 version: "3"
 services:
   strapi:
-    image: strapi/strapi
+    build:
+      context: ./app
+      dockerfile: Dockerfile
     env_file:
       - .env
     environment:

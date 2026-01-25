@@ -24,6 +24,10 @@
     },
     "route": {
       "model": "trail-parts"
+    },
+    "mapUrl": {
+      "type": "string",
+      "private": true
     }
   }
 }

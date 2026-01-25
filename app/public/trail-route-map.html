@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visualizador de TrackedPath</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      background: #f5f7fa;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 20px;
+      font-size: 24px;
+    }
+    .controls {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #666;
+      font-weight: 500;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+      margin-bottom: 15px;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    #map {
+      height: 600px;
+      width: 100%;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      background: white;
+    }
+    .info-box {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      margin-top: 20px;
+    }
+    .info-box h3 {
+      margin-bottom: 10px;
+      color: #333;
+      font-size: 16px;
+    }
+    .info-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .info-item:last-child {
+      border-bottom: none;
+    }
+    .error {
+      background: #ff4444;
+      color: white;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🗺️ Visualizador de Caminho GPS (TrackedPath)</h1>
+    
+    <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #2196f3;">
+      <strong>💡 Dica:</strong> Para visualizar de dentro do admin, adicione este link aos favoritos:<br>
+      <code style="background: white; padding: 2px 8px; border-radius: 3px; margin-top: 5px; display: inline-block;">
+        javascript:window.open('/trail-route-map.html?id='+window.location.pathname.split('/').pop(),'_blank')
+      </code>
+    </div>
+    
+    <div class="controls">
+      <label for="routeId">ID da Trail-Route:</label>
+      <input type="number" id="routeId" placeholder="Digite o ID da trail-route" min="1">
+      
+      <button onclick="loadRoute()">Carregar Mapa</button>
+    </div>
+
+    <div id="error" class="error" style="display: none;"></div>
+    <div id="loading" class="loading" style="display: none;">Carregando...</div>
+    
+    <div id="map"></div>
+    
+    <div id="info" class="info-box" style="display: none;">
+      <h3>📊 Informações da Rota</h3>
+      <div id="infoContent"></div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <script>
+    let map = null;
+    let polyline = null;
+    let markers = [];
+
+    // Inicializar mapa
+    function initMap() {
+      if (map) {
+        map.remove();
+      }
+      
+      map = L.map('map').setView([-15.8, -49.5], 8);
+      
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 18
+      }).addTo(map);
+    }
+
+    // Carregar rota do banco
+    async function loadRoute() {
+      const routeId = document.getElementById('routeId').value;
+      
+      if (!routeId) {
+        showError('Por favor, digite um ID válido');
+        return;
+      }
+
+      showLoading(true);
+      hideError();
+      document.getElementById('info').style.display = 'none';
+
+      try {
+        // Tentar com autenticação se necessário
+        const response = await fetch(`http://localhost:1337/trail-routes/${routeId}`, {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!response.ok) {
+          if (response.status === 403 || response.status === 401) {
+            throw new Error('Sem permissão. Configure as permissões públicas no Strapi admin.');
+          }
+          throw new Error(`Trail-route não encontrada (Status: ${response.status})`);
+        }
+
+        const data = await response.json();
+        
+        if (!data.trackedPath || !Array.isArray(data.trackedPath) || data.trackedPath.length === 0) {
+          throw new Error('Esta trail-route não possui dados GPS (trackedPath)');
+        }
+
+        renderMap(data);
+        showInfo(data);
+        
+      } catch (error) {
+        showError(error.message);
+      } finally {
+        showLoading(false);
+      }
+    }
+
+    // Renderizar mapa
+    function renderMap(data) {
+      initMap();
+      
+      // Limpar marcadores antigos
+      markers.forEach(m => m.remove());
+      markers = [];
+      if (polyline) polyline.remove();
+
+      const trackedPath = data.trackedPath;
+      
+      // Suportar tanto lat/lon quanto latitude/longitude
+      const coordinates = trackedPath.map(point => {
+        const lat = point.lat || point.latitude;
+        const lon = point.lon || point.longitude;
+        return [lat, lon];
+      });
+
+      // Desenhar polyline
+      polyline = L.polyline(coordinates, {
+        color: '#e74c3c',
+        weight: 4,
+        opacity: 0.8
+      }).addTo(map);
+
+      // Marcador de início
+      const startIcon = L.divIcon({
+        html: '<div style="background: #27ae60; color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">I</div>',
+        className: '',
+        iconSize: [36, 36],
+        iconAnchor: [18, 18]
+      });
+
+      const firstPoint = trackedPath[0];
+      const firstLat = firstPoint.lat || firstPoint.latitude;
+      const firstLon = firstPoint.lon || firstPoint.longitude;
+      
+      const startMarker = L.marker(coordinates[0], { icon: startIcon })
+        .addTo(map)
+        .bindPopup(`
+          <b>🚩 Início</b><br>
+          Lat: ${firstLat.toFixed(6)}<br>
+          Lon: ${firstLon.toFixed(6)}<br>
+          Horário: ${new Date(firstPoint.timestamp).toLocaleString('pt-BR')}
+        `);
+      markers.push(startMarker);
+
+      // Marcador de fim
+      const endIcon = L.divIcon({
+        html: '<div style="background: #e74c3c; color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">F</div>',
+        className: '',
+        iconSize: [36, 36],
+        iconAnchor: [18, 18]
+      });
+
+      const lastIndex = trackedPath.length - 1;
+      const lastPoint = trackedPath[lastIndex];
+      const lastLat = lastPoint.lat || lastPoint.latitude;
+      const lastLon = lastPoint.lon || lastPoint.longitude;
+      
+      const endMarker = L.marker(coordinates[lastIndex], { icon: endIcon })
+        .addTo(map)
+        .bindPopup(`
+          <b>🏁 Fim</b><br>
+          Lat: ${lastLat.toFixed(6)}<br>
+          Lon: ${lastLon.toFixed(6)}<br>
+          Horário: ${new Date(lastPoint.timestamp).toLocaleString('pt-BR')}
+        `);
+      markers.push(endMarker);
+
+      // Ajustar zoom
+      map.fitBounds(polyline.getBounds(), { padding: [50, 50] });
+    }
+
+    // Mostrar informações
+    function showInfo(data) {
+      const trackedPath = data.trackedPath;
+      const duration = new Date(trackedPath[trackedPath.length - 1].timestamp) - new Date(trackedPath[0].timestamp);
+      const hours = Math.floor(duration / 3600000);
+      const minutes = Math.floor((duration % 3600000) / 60000);
+
+      const html = `
+        <div class="info-item">
+          <span>Trail-Route ID:</span>
+          <strong>${data.id}</strong>
+        </div>
+        <div class="info-item">
+          <span>Pontos GPS coletados:</span>
+          <strong>${trackedPath.length}</strong>
+        </div>
+        <div class="info-item">
+          <span>Duração estimada:</span>
+          <strong>${hours}h ${minutes}min</strong>
+        </div>
+        <div class="info-item">
+          <span>Data de conclusão:</span>
+          <strong>${data.finishedAt ? new Date(data.finishedAt).toLocaleString('pt-BR') : 'Em andamento'}</strong>
+        </div>
+        <div class="info-item">
+          <span>Status:</span>
+          <strong>${data.published_at ? '✅ Published' : '📝 Draft'}</strong>
+        </div>
+      `;
+
+      document.getElementById('infoContent').innerHTML = html;
+      document.getElementById('info').style.display = 'block';
+    }
+
+    // Utilitários
+    function showError(message) {
+      const errorDiv = document.getElementById('error');
+      errorDiv.textContent = '❌ ' + message;
+      errorDiv.style.display = 'block';
+    }
+
+    function hideError() {
+      document.getElementById('error').style.display = 'none';
+    }
+
+    function showLoading(show) {
+      document.getElementById('loading').style.display = show ? 'block' : 'none';
+    }
+
+    // Inicializar ao carregar
+    initMap();
+
+    // Permitir Enter no input
+    document.getElementById('routeId').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        loadRoute();
+      }
+    });
+
+    // Carregar automaticamente se ID estiver na URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const idFromUrl = urlParams.get('id');
+    if (idFromUrl) {
+      document.getElementById('routeId').value = idFromUrl;
+      loadRoute();
+    }
+  </script>
+</body>
+</html>
