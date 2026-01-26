@@ -117,29 +117,6 @@
 		"merchantRejectedReason": {
 			"type": "text"
 		},
-		"organizationType": {
-			"type": "enumeration",
-			"enum": [
-				"government",
-				"trail_management",
-				"none"
-			]
-		},
-		"organizationName": {
-			"type": "string"
-		},
-		"businessName": {
-			"type": "string"
-		},
-		"businessType": {
-			"type": "string"
-		},
-		"businessAddress": {
-			"type": "text"
-		},
-		"businessPhone": {
-			"type": "string"
-		},
 		"establishments": {
 			"via": "owner",
 			"collection": "establishment"

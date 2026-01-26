@@ -1,4 +1,5 @@
 const { Client } = require('pg');
+const { table } = require('console');
 
 const client = new Client({
   host: 'localhost',
@@ -8,55 +9,48 @@ const client = new Client({
   database: 'strapi'
 });
 
-async function inspectTables() {
+const emojis = ['📍', '🔗', '🚶', '🗺️', '🛤️', '👤', '🏢', '📄', '⚙️', '🧩'];
+let emojiIndex = 0;
+
+async function inspectAllTables() {
   try {
     await client.connect();
-    
-    // Checkpoints
-    console.log('📍 Estrutura da tabela CHECKPOINTS:');
-    const checkpointsSchema = await client.query(`
-      SELECT column_name, data_type, is_nullable 
-      FROM information_schema.columns 
-      WHERE table_name = 'checkpoints' 
-      ORDER BY ordinal_position;
-    `);
-    console.table(checkpointsSchema.rows);
 
-    // Components locations
-    console.log('\n📍 Estrutura da tabela COMPONENTS_GENERAL_LOCATIONS:');
-    const locationsSchema = await client.query(`
-      SELECT column_name, data_type, is_nullable 
-      FROM information_schema.columns 
-      WHERE table_name = 'components_general_locations' 
-      ORDER BY ordinal_position;
+    // Get all user-defined tables in the public schema
+    const tablesResult = await client.query(`
+      SELECT table_name
+      FROM information_schema.tables
+      WHERE table_schema = 'public'
+        AND table_type = 'BASE TABLE'
+        AND table_name NOT LIKE 'pg_%'
+        AND table_name NOT LIKE 'sql_%'
+        AND table_name NOT IN ('strapi_administrator', 'strapi_permission', 'strapi_role', 'strapi_user', 'strapi_webhooks', 'strapi_api_tokens', 'files_related_morphs', 'admin_permissions_role_links')
+      ORDER BY table_name;
     `);
-    console.table(locationsSchema.rows);
 
-    // Checkpoints components (tabela de ligação)
-    console.log('\n🔗 Estrutura da tabela CHECKPOINTS_COMPONENTS:');
-    const checkpointsComponents = await client.query(`
-      SELECT column_name, data_type, is_nullable 
-      FROM information_schema.columns 
-      WHERE table_name = 'checkpoints_components' 
-      ORDER BY ordinal_position;
-    `);
-    console.table(checkpointsComponents.rows);
+    const tableNames = tablesResult.rows.map(row => row.table_name);
 
-    // Trail parts
-    console.log('\n🚶 Estrutura da tabela TRAIL_PARTS:');
-    const trailPartsSchema = await client.query(`
-      SELECT column_name, data_type, is_nullable 
-      FROM information_schema.columns 
-      WHERE table_name = 'trail_parts' 
-      ORDER BY ordinal_position;
-    `);
-    console.table(trailPartsSchema.rows);
+    for (const tableName of tableNames) {
+      const emoji = emojis[emojiIndex % emojis.length];
+      console.log(`\n${emoji} Estrutura da tabela ${tableName.toUpperCase()}:`);
+      
+      const schemaResult = await client.query(`
+        SELECT column_name, data_type, is_nullable 
+        FROM information_schema.columns 
+        WHERE table_name = $1
+        ORDER BY ordinal_position;
+      `, [tableName]);
+      
+      console.table(schemaResult.rows);
+      emojiIndex++;
+    }
 
   } catch (error) {
-    console.error('Erro:', error.message);
+    console.error('Erro ao inspecionar tabelas:', error.message);
   } finally {
     await client.end();
   }
 }
 
-inspectTables();
+inspectAllTables();
+

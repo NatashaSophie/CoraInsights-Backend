@@ -1487,29 +1487,6 @@
               "merchantRejectedReason": {
                 "type": "string"
               },
-              "organizationType": {
-                "type": "string",
-                "enum": [
-                  "government",
-                  "trail_management",
-                  "none"
-                ]
-              },
-              "organizationName": {
-                "type": "string"
-              },
-              "businessName": {
-                "type": "string"
-              },
-              "businessType": {
-                "type": "string"
-              },
-              "businessAddress": {
-                "type": "string"
-              },
-              "businessPhone": {
-                "type": "string"
-              },
               "establishments": {
                 "type": "array",
                 "items": {
@@ -1529,29 +1506,6 @@
             "format": "date-time"
           },
           "merchantRejectedReason": {
-            "type": "string"
-          },
-          "organizationType": {
-            "type": "string",
-            "enum": [
-              "government",
-              "trail_management",
-              "none"
-            ]
-          },
-          "organizationName": {
-            "type": "string"
-          },
-          "businessName": {
-            "type": "string"
-          },
-          "businessType": {
-            "type": "string"
-          },
-          "businessAddress": {
-            "type": "string"
-          },
-          "businessPhone": {
             "type": "string"
           },
           "establishments": {
@@ -1704,29 +1658,6 @@
             "format": "date-time"
           },
           "merchantRejectedReason": {
-            "type": "string"
-          },
-          "organizationType": {
-            "type": "string",
-            "enum": [
-              "government",
-              "trail_management",
-              "none"
-            ]
-          },
-          "organizationName": {
-            "type": "string"
-          },
-          "businessName": {
-            "type": "string"
-          },
-          "businessType": {
-            "type": "string"
-          },
-          "businessAddress": {
-            "type": "string"
-          },
-          "businessPhone": {
             "type": "string"
           },
           "establishments": {

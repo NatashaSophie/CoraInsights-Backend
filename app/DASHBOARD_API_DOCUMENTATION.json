@@ -1,0 +1,86 @@
+{
+  "endpoint": "GET /dashboards/public",
+  "description": "API completa do dashboard com todos os dados estatísticos",
+  "response": {
+    "totalPilgrims": 163,
+    "malePilgrims": 75,
+    "femalePilgrims": 88,
+    "completedTrails": 45,
+    "activeTrails": 5,
+    "topPilgrims": [
+      {
+        "rank": 1,
+        "name": "Isabella Ribeiro Silva",
+        "age": 35,
+        "completedTrails": 2,
+        "totalHours": "36.0",
+        "averageSpeed": "8.27"
+      },
+      {
+        "rank": 2,
+        "name": "Rodrigo Rodrigues Souza",
+        "age": 50,
+        "completedTrails": 2,
+        "totalHours": "36.0",
+        "averageSpeed": "8.27"
+      }
+    ],
+    "monthlyData": [
+      {
+        "month": "2024-01",
+        "signups": 6
+      },
+      {
+        "month": "2024-02",
+        "signups": 8
+      }
+    ],
+    "completionsByMonth": [
+      {
+        "month": "2026-01",
+        "completions": 45
+      }
+    ],
+    "partsCompletionData": [
+      {
+        "id": 1,
+        "name": "Cidade de Corumbá ao Salto de Corumbá",
+        "distance": "7.5 km",
+        "time": "5 horas",
+        "completions": 35
+      },
+      {
+        "id": 2,
+        "name": "Salto de Corumbá ao Pico dos Pireneus",
+        "distance": "23.5 km",
+        "time": "5 horas",
+        "completions": 37
+      }
+    ]
+  },
+  "implementacoes": {
+    "graficos_existentes_preenchidos": [
+      "Crescimento Mensal de Cadastros (monthlyData) - 25 meses de dados",
+      "Ranking de Peregrinos Top 5 (topPilgrims) - Incluindo idade"
+    ],
+    "novos_graficos_criados": [
+      "Período do ano com maior incidência de conclusões (completionsByMonth)",
+      "Trechos do caminho com maior índice de conclusão (partsCompletionData) - 13 trechos"
+    ],
+    "melhorias": [
+      "Idade calculada automaticamente a partir da data de nascimento",
+      "Velocidade média calculada (297.6 km / tempo total)",
+      "Queries otimizadas com JOIN para evitar N+1",
+      "Dados reais do banco de dados PostgreSQL"
+    ]
+  },
+  "frontend_uso": {
+    "exemplo_consumo": "const response = await fetch('http://localhost:1337/dashboards/public').then(r => r.json());",
+    "graficos_sugeridos": {
+      "crescimento_mensal": "Line Chart com monthlyData (mês x cadastros)",
+      "top_pilgrims": "Table ou Bar Chart com topPilgrims (ranking, nome, idade, trilhas)",
+      "completions_month": "Bar Chart com completionsByMonth (mês x conclusões)",
+      "trail_parts": "Horizontal Bar Chart com partsCompletionData (trecho x conclusões)"
+    }
+  }
+}

@@ -1,0 +1,213 @@
+module.exports = {
+  async getPublicData(ctx) {
+    try {
+      // Buscar total de peregrinos ativos
+      const totalPilgrims = await strapi.query('user', 'users-permissions').count({
+        userType: 'pilgrim',
+        blocked: false
+      });
+
+      // Buscar peregrinos por sexo
+      const malePilgrims = await strapi.query('user', 'users-permissions').count({
+        userType: 'pilgrim',
+        blocked: false,
+        sex: 'Male'
+      });
+
+      const femalePilgrims = await strapi.query('user', 'users-permissions').count({
+        userType: 'pilgrim',
+        blocked: false,
+        sex: 'Female'
+      });
+
+      // Buscar todos os percursos (trails)
+      const allTrails = await strapi.query('trails').find({ 
+        _limit: -1,
+        _sort: 'created_at:DESC'
+      });
+      
+      // Percursos concluídos (com finishedAt preenchido)
+      const completedTrails = allTrails.filter(trail => trail.finishedAt).length;
+      
+      // Percursos ativos (sem finishedAt)
+      const activeTrails = allTrails.filter(trail => !trail.finishedAt).length;
+
+      // Status do Caminho: contar quantos trechos cada percurso completou
+      const trailsWithRoutes = await Promise.all(
+        allTrails.map(async (trail) => {
+          const routes = await strapi.query('trail-route').count({
+            trail: trail.id
+          });
+          return { ...trail, routesCount: routes };
+        })
+      );
+
+      // Separar por quantidade de trechos (1-12 parciais, 13 completo)
+      // Apenas percursos CONCLUÍDOS (com finishedAt)
+      const caminhoCompleto = trailsWithRoutes.filter(t => t.routesCount === 13 && t.finishedAt).length;
+      const caminhosParciais = {};
+      for (let i = 1; i <= 12; i++) {
+        // Contar apenas percursos concluídos com i trechos
+        caminhosParciais[`${i}_trechos`] = trailsWithRoutes.filter(t => t.routesCount === i && t.finishedAt).length;
+      }
+      // Em andamento = percursos NÃO concluídos (sem finishedAt)
+      const emAndamento = trailsWithRoutes.filter(t => !t.finishedAt).length;
+
+      // Buscar apenas os top 20 peregrinos mais ativos para o ranking
+      // Otimização: não processar todos os 163 peregrinos
+      const allTrailsForRanking = await strapi.query('trails').find({
+        _limit: -1,
+        _sort: 'user:ASC'
+      });
+
+      // Agrupar trails por usuário
+      const trailsByUser = {};
+      for (const trail of allTrailsForRanking) {
+        const userId = trail.user;
+        if (!trailsByUser[userId]) {
+          trailsByUser[userId] = [];
+        }
+        trailsByUser[userId].push(trail);
+      }
+
+      // Buscar todas as rotas de uma vez
+      const allRoutes = await strapi.query('trail-route').find({
+        _limit: -1
+      });
+
+      // Agrupar rotas por trail
+      const routesByTrail = {};
+      for (const route of allRoutes) {
+        const trailId = route.trail;
+        if (!routesByTrail[trailId]) {
+          routesByTrail[trailId] = [];
+        }
+        routesByTrail[trailId].push(route);
+      }
+
+      // Calcular estatísticas apenas para usuários com percursos
+      const pilgrimsWithStats = [];
+      
+      for (const [userId, userTrails] of Object.entries(trailsByUser)) {
+        // Buscar info do peregrino
+        const pilgrim = await strapi.query('user', 'users-permissions').findOne({
+          id: userId
+        });
+
+        if (!pilgrim || pilgrim.userType !== 'pilgrim' || pilgrim.blocked) {
+          continue;
+        }
+
+        // Contar percursos concluídos
+        const completedCount = userTrails.filter(t => t.finishedAt).length;
+        
+        // Contar total de trechos percorridos
+        let totalRoutes = 0;
+        let totalDistance = 0;
+        let totalTime = 0;
+
+        for (const trail of userTrails) {
+          const routes = routesByTrail[trail.id] || [];
+          totalRoutes += routes.length;
+          
+          // Calcular distância (assumindo ~38km por trecho)
+          totalDistance += routes.length * 38;
+
+          // Calcular tempo se o percurso foi concluído
+          if (trail.finishedAt && trail.startedAt) {
+            const start = new Date(trail.startedAt);
+            const finish = new Date(trail.finishedAt);
+            const hours = (finish - start) / (1000 * 60 * 60);
+            totalTime += hours;
+          }
+        }
+
+        // Calcular velocidade média (km/h)
+        const averageSpeed = totalTime > 0 ? totalDistance / totalTime : 0;
+
+        // Calcular pontuação: 
+        // - Distância: 10 pontos por km
+        // - Velocidade média entre 4-6 km/h ganha bônus
+        // - Percursos completos: 500 pontos cada
+        let points = totalDistance * 10;
+        if (averageSpeed >= 4 && averageSpeed <= 6) {
+          points += 1000; // Bônus por velocidade ideal
+        }
+        points += completedCount * 500;
+
+        if (points > 0) {
+          pilgrimsWithStats.push({
+            id: pilgrim.id,
+            nickname: pilgrim.nickname,
+            trails: completedCount,
+            routes: totalRoutes,
+            distance: totalDistance,
+            time: totalTime,
+            averageSpeed: averageSpeed,
+            points: Math.round(points)
+          });
+        }
+      }
+
+      // Top 10 peregrinos por pontuação
+      const topPilgrims = pilgrimsWithStats
+        .filter(p => p.points > 0)
+        .sort((a, b) => b.points - a.points)
+        .slice(0, 10)
+        .map(p => ({
+          nickname: p.nickname,
+          trails: p.trails,
+          routes: p.routes,
+          distance: p.distance,
+          time: Math.round(p.time * 10) / 10,
+          averageSpeed: Math.round(p.averageSpeed * 100) / 100,
+          points: p.points
+        }));
+
+      // Crescimento mensal: novos peregrinos cadastrados por mês
+      // Mostra quantos peregrinos SE CADASTRARAM em cada mês dos últimos 12 meses
+      const now = new Date();
+      const monthlyData = [];
+      
+      for (let i = 11; i >= 0; i--) {
+        const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const nextMonth = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
+        
+        const count = await strapi.query('user', 'users-permissions').count({
+          userType: 'pilgrim',
+          created_at_gte: date,
+          created_at_lt: nextMonth
+        });
+
+        monthlyData.push({
+          month: date.toLocaleString('pt-BR', { month: 'short' }),
+          count: count
+        });
+      }
+
+      ctx.send({
+        totalPilgrims,
+        malePilgrims,
+        femalePilgrims,
+        completedTrails,
+        activeTrails,
+        caminhoCompleto,
+        caminhosParciais,
+        emAndamento,
+        monthlyGrowth: totalPilgrims > 0 ? '+12%' : '0%',
+        completionRate: allTrails.length > 0 
+          ? Math.round((completedTrails / allTrails.length) * 100) + '%'
+          : '0%',
+        topPilgrims,
+        monthlyData
+      });
+
+    } catch (error) {
+      console.error('Erro ao buscar dados públicos:', error);
+      ctx.send({
+        error: 'Erro ao buscar dados',
+        message: error.message
+      }, 500);
+    }
+  }
+};
