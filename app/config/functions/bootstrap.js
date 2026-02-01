@@ -16,6 +16,80 @@ module.exports = async () => {
   // Registrar rotas customizadas de autenticação
   console.log('[BOOTSTRAP] Registering auth routes...');
 
+  // Executar migração de roles
+  try {
+    console.log('[MIGRATION] Iniciando atualização de roles...');
+    
+    // Primeiro, vamos verificar as roles existentes
+    const rolesResult = await strapi.connections.default.raw(`
+      SELECT id, name FROM "users-permissions_role" ORDER BY id
+    `);
+
+    console.log('[MIGRATION] Roles disponíveis:');
+    rolesResult.rows.forEach(role => {
+      console.log(`  ID: ${role.id}, Name: ${role.name}`);
+    });
+
+    console.log('\n[MIGRATION] Atualizando roles baseado em userType...');
+
+    // Update pilgrim -> role 1
+    const updatePilgrim = await strapi.connections.default.raw(`
+      UPDATE "users-permissions_user" 
+      SET role = 1 
+      WHERE "userType" = 'pilgrim' OR "userType" = 'peregrino'
+    `);
+    console.log(`[MIGRATION] Peregrinos atualizados: ${updatePilgrim.rowCount}`);
+
+    // Update manager -> role 2
+    const updateManager = await strapi.connections.default.raw(`
+      UPDATE "users-permissions_user" 
+      SET role = 2 
+      WHERE "userType" = 'manager' OR "userType" = 'gestor'
+    `);
+    console.log(`[MIGRATION] Gestores atualizados: ${updateManager.rowCount}`);
+
+    // Update merchant -> role 3
+    const updateMerchant = await strapi.connections.default.raw(`
+      UPDATE "users-permissions_user" 
+      SET role = 3 
+      WHERE "userType" = 'merchant' OR "userType" = 'comerciante'
+    `);
+    console.log(`[MIGRATION] Comerciantes atualizados: ${updateMerchant.rowCount}`);
+
+    // Verificar o resultado
+    console.log('\n[MIGRATION] Verificando atualização:');
+    const checkResult = await strapi.connections.default.raw(`
+      SELECT "userType", role, COUNT(*) as count 
+      FROM "users-permissions_user" 
+      GROUP BY "userType", role 
+      ORDER BY role
+    `);
+
+    checkResult.rows.forEach(row => {
+      console.log(`  ${row.userType} -> role ${row.role}: ${row.count} usuários`);
+    });
+
+    console.log('[MIGRATION] ✅ Atualização concluída com sucesso!');
+
+  } catch (error) {
+    console.error('[BOOTSTRAP] ❌ Erro ao executar migração de roles:', error.message);
+  }
+
+  // Verificar estrutura da tabela ao iniciar
+  try {
+    const result = await strapi.connections.default.raw(`
+      SELECT * FROM "users-permissions_user" LIMIT 1
+    `);
+    
+    if (result.rows.length > 0) {
+      const user = result.rows[0];
+      console.log('[BOOTSTRAP] Columns in users-permissions_user:', Object.keys(user).join(', '));
+      console.log('[BOOTSTRAP] Sample user:', user);
+    }
+  } catch (e) {
+    console.log('[BOOTSTRAP] Could not check table structure:', e.message);
+  }
+
   // Middleware para rota POST /api/auth/login
   strapi.router.post('/api/auth/login', async (ctx, next) => {
     console.log('[AUTH ROUTE] ========== LOGIN REQUEST RECEIVED ==========');
@@ -61,7 +135,7 @@ module.exports = async () => {
         
         // Query SQL direta na tabela users-permissions_user
         const result = await strapi.connections.default.raw(
-          'SELECT id, email, username, password, role FROM "users-permissions_user" WHERE email = ? LIMIT 1',
+          'SELECT id, email, username, password, role, "userType" FROM "users-permissions_user" WHERE email = ? LIMIT 1',
           [identifier]
         );
         
@@ -107,21 +181,21 @@ module.exports = async () => {
 
       // role é um ID numérico, precisamos validar se é um role permitido
       // Roles no Strapi users-permissions: 1 = Authenticated, 2 = Public, etc
-      // Precisamos buscar qual é o ID da role do usuário
+      // userType é uma string que indica o tipo de usuário: pilgrim, manager, merchant
       console.log('[AUTH] User role ID:', userData.role);
+      console.log('[AUTH] User type:', userData.userType);
       
-      // Por enquanto, vamos aceitar qualquer role que não seja Public (geralmente ID 2)
-      // Depois ajustamos conforme o seu padrão de roles
-      const allowedRoleIds = [1, 3, 4, 5]; // IDs de roles permitidas (pilgrim, manager, merchant)
+      // Validar userType
+      const allowedUserTypes = ['pilgrim', 'manager', 'merchant', 'gestor', 'comerciante', 'peregrino'];
       
-      if (!allowedRoleIds.includes(userData.role)) {
-        console.log('[AUTH] Unauthorized role ID for:', identifier, 'role ID:', userData.role);
+      if (!allowedUserTypes.includes(userData.userType)) {
+        console.log('[AUTH] Unauthorized user type for:', identifier, 'user type:', userData.userType);
         ctx.status = 403;
         ctx.body = { error: 'Only authorized users can access the dashboard' };
         return;
       }
 
-      console.log('[AUTH] Login successful for:', identifier, 'with role ID:', userData.role);
+      console.log('[AUTH] Login successful for:', identifier, 'with userType:', userData.userType);
 
       ctx.status = 200;
       ctx.body = {
@@ -130,7 +204,7 @@ module.exports = async () => {
           id: userData.id,
           email: userData.email,
           username: userData.username || userData.email,
-          userType: userData.role || 'user'
+          userType: mapUserTypeToId(userData.userType)
         }
       };
       console.log('[AUTH] Returning success response');
@@ -140,6 +214,19 @@ module.exports = async () => {
       ctx.body = { error: 'Failed to login' };
     }
   });
+
+  // Função para mapear userType string para ID numérico (baseado em role)
+  function mapUserTypeToId(userType) {
+    const mapping = {
+      'pilgrim': 1,      // role 1 para peregrino
+      'manager': 2,      // role 2 para gestor
+      'merchant': 3,     // role 3 para comerciante
+      'gestor': 2,
+      'comerciante': 3,
+      'peregrino': 1
+    };
+    return mapping[userType] || 1;
+  }
 
   // Middleware para rota GET /api/auth/validate
   strapi.router.get('/api/auth/validate', async (ctx, next) => {
