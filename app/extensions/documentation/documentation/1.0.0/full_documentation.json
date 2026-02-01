@@ -14,7 +14,7 @@
       "name": "Apache 2.0",
       "url": "https://www.apache.org/licenses/LICENSE-2.0.html"
     },
-    "x-generation-date": "02/01/2026 12:11:30 AM"
+    "x-generation-date": "02/01/2026 12:50:51 AM"
   },
   "x-strapi-config": {
     "path": "/documentation",
@@ -60,10 +60,10 @@
     "/auth/login": {
       "post": {
         "deprecated": false,
-        "description": "Create a new record",
+        "description": "Create a new auth record",
         "responses": {
           "200": {
-            "description": "response",
+            "description": "Retrieve auth document(s)",
             "content": {
               "application/json": {
                 "schema": {
@@ -134,7 +134,7 @@
         "description": "",
         "responses": {
           "200": {
-            "description": "response",
+            "description": "Retrieve auth document(s)",
             "content": {
               "application/json": {
                 "schema": {
@@ -5561,40 +5561,44 @@
       }
     }
   },
-  "tags": [
-    {
-      "name": "Auth"
-    },
-    {
-      "name": "Certificate"
-    },
-    {
-      "name": "Checkpoints"
-    },
-    {
-      "name": "Dashboards"
-    },
-    {
-      "name": "Establishment"
-    },
-    {
-      "name": "Trails"
-    },
-    {
-      "name": "Email - Email"
-    },
-    {
-      "name": "Upload - File"
-    },
-    {
-      "name": "UsersPermissions - Role"
-    },
-    {
-      "name": "UsersPermissions - User"
-    }
-  ],
   "components": {
     "schemas": {
+      "Auth": {
+        "required": [
+          "id",
+          "email"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string"
+          }
+        }
+      },
+      "NewAuth": {
+        "required": [
+          "email"
+        ],
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string"
+          },
+          "created_by": {
+            "type": "string"
+          },
+          "updated_by": {
+            "type": "string"
+          }
+        }
+      },
       "Certificate": {
         "required": [
           "id"
@@ -7509,5 +7513,37 @@
         "bearerFormat": "JWT"
       }
     }
-  }
+  },
+  "tags": [
+    {
+      "name": "Auth"
+    },
+    {
+      "name": "Certificate"
+    },
+    {
+      "name": "Checkpoints"
+    },
+    {
+      "name": "Dashboards"
+    },
+    {
+      "name": "Establishment"
+    },
+    {
+      "name": "Trails"
+    },
+    {
+      "name": "Email - Email"
+    },
+    {
+      "name": "Upload - File"
+    },
+    {
+      "name": "UsersPermissions - Role"
+    },
+    {
+      "name": "UsersPermissions - User"
+    }
+  ]
 }

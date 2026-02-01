@@ -1,0 +1,22 @@
+{
+  "kind": "collectionType",
+  "collectionName": "auth",
+  "info": {
+    "name": "Auth",
+    "description": "Authentication API collection"
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "email": {
+      "type": "string",
+      "required": true
+    },
+    "token": {
+      "type": "string"
+    }
+  }
+}

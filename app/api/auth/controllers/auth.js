@@ -5,7 +5,8 @@ module.exports = {
     const { identifier, password } = ctx.request.body;
 
     if (!identifier || !password) {
-      return ctx.badRequest('identifier and password are required');
+      ctx.badRequest('identifier and password are required');
+      return;
     }
 
     try {
@@ -16,7 +17,7 @@ module.exports = {
       
       try {
         const result = await strapi.db.connection.raw(
-          'SELECT id, email, username, password, role FROM up_users WHERE email = ? LIMIT 1',
+          'SELECT id, email, username, password, userType FROM up_users WHERE email = ? LIMIT 1',
           [identifier]
         );
         
@@ -24,21 +25,34 @@ module.exports = {
         console.log('[AUTH] User found:', user ? user.email : 'none');
       } catch (e) {
         console.log('[AUTH] Database query error:', e.message);
-        return ctx.unauthorized('Invalid credentials');
+        ctx.unauthorized('Invalid credentials');
+        return;
       }
 
       if (!user) {
         console.log('[AUTH] No user found for:', identifier);
-        return ctx.unauthorized('Invalid credentials');
+        ctx.unauthorized('Invalid credentials');
+        return;
       }
 
       // Validar senha
       if (user.password !== password) {
         console.log('[AUTH] Invalid password for:', identifier);
-        return ctx.unauthorized('Invalid credentials');
+        ctx.unauthorized('Invalid credentials');
+        return;
       }
 
-      console.log('[AUTH] Login successful for:', identifier, 'with role:', user.role);
+      // Validar userType: apenas pilgrim, manager e merchant podem fazer login no dashboard
+      const allowedRoles = ['pilgrim', 'manager', 'merchant'];
+      const userRole = (user.userType || '').toLowerCase();
+      
+      if (!allowedRoles.includes(userRole)) {
+        console.log('[AUTH] Unauthorized userType for:', identifier, 'userType:', userRole);
+        ctx.forbidden('Only pilgrim, manager and merchant users can access the dashboard');
+        return;
+      }
+
+      console.log('[AUTH] Login successful for:', identifier, 'with userType:', user.userType);
 
       // Retornar dados do usuário
       ctx.send({
@@ -47,9 +61,7 @@ module.exports = {
           id: user.id,
           email: user.email,
           username: user.username || user.email,
-          role: {
-            type: user.role || 'user'
-          }
+          userType: user.userType || 'user'
         }
       });
     } catch (error) {
@@ -62,7 +74,8 @@ module.exports = {
     const token = ctx.get('Authorization')?.replace('Bearer ', '');
     
     if (!token) {
-      return ctx.unauthorized('No token provided');
+      ctx.unauthorized('No token provided');
+      return;
     }
 
     if (token && token.startsWith('mock-jwt-token')) {

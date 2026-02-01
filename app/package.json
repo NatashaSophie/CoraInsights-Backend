@@ -10,6 +10,7 @@
 		"strapi": "strapi"
 	},
 	"dependencies": {
+		"bcryptjs": "^3.0.3",
 		"cheerio": "^1.0.0-rc.5",
 		"date-fns": "^2.25.0",
 		"graphql": "^15.5.0",

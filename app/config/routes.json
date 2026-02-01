@@ -5,6 +5,7 @@
       "path": "/auth/login",
       "handler": "auth.login",
       "config": {
+        "auth": false,
         "policies": []
       }
     },
@@ -13,6 +14,7 @@
       "path": "/auth/validate",
       "handler": "auth.validate",
       "config": {
+        "auth": false,
         "policies": []
       }
     }
