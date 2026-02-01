@@ -1,5 +1,3 @@
-'use strict';
-
 /**
  * Analytics Routes
  * Define as rotas para os endpoints de analytics
