@@ -1,9 +1,5 @@
 'use strict';
 
-/**
- * A set of functions called "actions" for `auth`
- */
-
 module.exports = {
   async login(ctx) {
     const { identifier, password } = ctx.request.body;
@@ -13,47 +9,36 @@ module.exports = {
     }
 
     try {
-      // Buscar usuário pelo email na tabela de usuários do Strapi
-      // Tentar usar a API do Strapi primeiro
+      console.log('[AUTH] Login attempt for:', identifier);
+      
+      // Buscar usuário no banco
       let user = null;
       
       try {
-        // Tentar acessar via query do Strapi
-        user = await strapi.query('plugin::users-permissions.user').findOne({
-          where: { email: identifier }
-        });
-      } catch (e) {
-        console.log('Query method 1 failed, trying method 2:', e.message);
+        const result = await strapi.db.connection.raw(
+          'SELECT id, email, username, password, role FROM up_users WHERE email = ? LIMIT 1',
+          [identifier]
+        );
         
-        // Fallback: tentar query raw direto no banco
-        try {
-          const result = await strapi.db.connection.raw(
-            'SELECT * FROM up_users WHERE email = ? LIMIT 1',
-            [identifier]
-          );
-          user = result.rows[0] || result[0];
-        } catch (e2) {
-          console.log('Query method 2 failed, trying method 3:', e2.message);
-          
-          // Fallback final: usar query simples
-          user = await strapi.entityService.findMany('plugin::users-permissions.user', {
-            filters: { email: identifier },
-            limit: 1
-          });
-          user = user && user.length > 0 ? user[0] : null;
-        }
+        user = result.rows && result.rows.length > 0 ? result.rows[0] : result[0];
+        console.log('[AUTH] User found:', user ? user.email : 'none');
+      } catch (e) {
+        console.log('[AUTH] Database query error:', e.message);
+        return ctx.unauthorized('Invalid credentials');
       }
 
       if (!user) {
-        ctx.unauthorized('Invalid credentials');
-        return;
+        console.log('[AUTH] No user found for:', identifier);
+        return ctx.unauthorized('Invalid credentials');
       }
 
-      // Validar senha (simples comparação, em produção usar bcrypt)
+      // Validar senha
       if (user.password !== password) {
-        ctx.unauthorized('Invalid credentials');
-        return;
+        console.log('[AUTH] Invalid password for:', identifier);
+        return ctx.unauthorized('Invalid credentials');
       }
+
+      console.log('[AUTH] Login successful for:', identifier, 'with role:', user.role);
 
       // Retornar dados do usuário
       ctx.send({
@@ -63,26 +48,23 @@ module.exports = {
           email: user.email,
           username: user.username || user.email,
           role: {
-            type: user.role?.name || user.role || 'user'
+            type: user.role || 'user'
           }
         }
       });
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('[AUTH] Login error:', error);
       ctx.internalServerError('Failed to login');
     }
   },
 
   async validate(ctx) {
-    // Validate a JWT token
     const token = ctx.get('Authorization')?.replace('Bearer ', '');
     
     if (!token) {
-      ctx.unauthorized('No token provided');
-      return;
+      return ctx.unauthorized('No token provided');
     }
 
-    // Para setup mock, apenas verifica se não está vazio
     if (token && token.startsWith('mock-jwt-token')) {
       ctx.send({ valid: true });
     } else {

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Real Login API</title>
+    <style>
+        body { font-family: Arial; margin: 20px; }
+        input { padding: 8px; margin: 5px; }
+        button { padding: 10px 20px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 4px; }
+        pre { background: #f4f4f4; padding: 15px; border-radius: 4px; overflow-x: auto; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>🔐 Teste de Login Real</h1>
+    
+    <div>
+        <h3>Credenciais de Teste:</h3>
+        <p><strong>Email:</strong> gestor@cora.com</p>
+        <p><strong>Senha:</strong> Cora@123</p>
+    </div>
+    
+    <div>
+        <input type="email" id="email" placeholder="Email" value="gestor@cora.com">
+        <input type="password" id="password" placeholder="Senha" value="Cora@123">
+        <button onclick="testLogin()">Testar Login</button>
+    </div>
+    
+    <h3>Resultado:</h3>
+    <pre id="result">Aguardando teste...</pre>
+    
+    <script>
+        async function testLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            const resultDiv = document.getElementById('result');
+            resultDiv.textContent = 'Enviando requisição...';
+            
+            try {
+                console.log('Enviando POST para http://localhost:1337/api/auth/login');
+                const response = await fetch('http://localhost:1337/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        identifier: email,
+                        password: password
+                    })
+                });
+                
+                const data = await response.json();
+                
+                const result = {
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: {
+                        contentType: response.headers.get('content-type')
+                    },
+                    body: data
+                };
+                
+                if (response.status === 200) {
+                    resultDiv.innerHTML = '<span class="success">✅ LOGIN BEM-SUCEDIDO!</span>\n\n' + 
+                                         JSON.stringify(result, null, 2);
+                } else {
+                    resultDiv.innerHTML = '<span class="error">❌ ERRO NO LOGIN</span>\n\n' + 
+                                         JSON.stringify(result, null, 2);
+                }
+            } catch (error) {
+                resultDiv.innerHTML = '<span class="error">❌ ERRO NA REQUISIÇÃO</span>\n\n' + error.message;
+            }
+        }
+        
+        // Testar automaticamente ao carregar
+        window.addEventListener('load', () => {
+            setTimeout(testLogin, 500);
+        });
+    </script>
+</body>
+</html>
