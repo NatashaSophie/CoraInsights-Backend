@@ -11,7 +11,22 @@ module.exports = {
   async getPilgrimAnalytics(ctx) {
     try {
       const { start, end } = ctx.query;
-      const userId = ctx.state.user?.id;
+      
+      // Tentar buscar usuário do token JWT no header
+      let userId = ctx.state.user?.id;
+      
+      if (!userId && ctx.request.headers.authorization) {
+        // Token está presente no header, validar manualmente
+        const token = ctx.request.headers.authorization?.replace('Bearer ', '');
+        if (token) {
+          try {
+            const decoded = require('jsonwebtoken').verify(token, strapi.config.get('server.admin.auth.secret') || 'secret-key');
+            userId = decoded.id;
+          } catch (e) {
+            // Token inválido, continuar com usuário anônimo
+          }
+        }
+      }
 
       // Se não há usuário autenticado, retornar dados vazios
       if (!userId) {
