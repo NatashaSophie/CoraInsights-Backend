@@ -5,7 +5,7 @@ module.exports = {
       path: '/auth/login',
       handler: 'auth.login',
       config: {
-        auth: false,
+        policies: [],
       },
     },
     {
@@ -13,7 +13,7 @@ module.exports = {
       path: '/auth/validate',
       handler: 'auth.validate',
       config: {
-        auth: false,
+        policies: [],
       },
     },
   ],

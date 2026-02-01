@@ -13,43 +13,57 @@ module.exports = {
     }
 
     try {
-      // Query database for user by email
-      const query = `
-        SELECT 
-          users.id,
-          users.email,
-          users.username,
-          users.password,
-          roles.name as role
-        FROM public.up_users users
-        LEFT JOIN public.up_users_role_lnk role_link ON users.id = role_link.user_id
-        LEFT JOIN public.up_roles roles ON role_link.role_id = roles.id
-        WHERE users.email = $1
-      `;
-
-      const result = await strapi.db.connection.raw(query, [identifier]);
+      // Buscar usuário pelo email na tabela de usuários do Strapi
+      // Tentar usar a API do Strapi primeiro
+      let user = null;
       
-      if (result.rows.length === 0) {
-        return ctx.unauthorized('Invalid credentials');
+      try {
+        // Tentar acessar via query do Strapi
+        user = await strapi.query('plugin::users-permissions.user').findOne({
+          where: { email: identifier }
+        });
+      } catch (e) {
+        console.log('Query method 1 failed, trying method 2:', e.message);
+        
+        // Fallback: tentar query raw direto no banco
+        try {
+          const result = await strapi.db.connection.raw(
+            'SELECT * FROM up_users WHERE email = ? LIMIT 1',
+            [identifier]
+          );
+          user = result.rows[0] || result[0];
+        } catch (e2) {
+          console.log('Query method 2 failed, trying method 3:', e2.message);
+          
+          // Fallback final: usar query simples
+          user = await strapi.entityService.findMany('plugin::users-permissions.user', {
+            filters: { email: identifier },
+            limit: 1
+          });
+          user = user && user.length > 0 ? user[0] : null;
+        }
       }
 
-      const user = result.rows[0];
+      if (!user) {
+        ctx.unauthorized('Invalid credentials');
+        return;
+      }
 
-      // For now, since we don't have bcrypt setup, do simple comparison
-      // In production, this should use bcrypt.compare()
+      // Validar senha (simples comparação, em produção usar bcrypt)
       if (user.password !== password) {
-        return ctx.unauthorized('Invalid credentials');
+        ctx.unauthorized('Invalid credentials');
+        return;
       }
 
-      // Return user data with role
+      // Retornar dados do usuário
       ctx.send({
-        jwt: 'mock-jwt-token', // In production, generate a real JWT
+        jwt: 'mock-jwt-token-' + user.id,
         user: {
           id: user.id,
           email: user.email,
-          username: user.username,
+          username: user.username || user.email,
           role: {
-            type: user.role || 'user'
+            type: user.role?.name || user.role || 'user'
           }
         }
       });
@@ -64,11 +78,12 @@ module.exports = {
     const token = ctx.get('Authorization')?.replace('Bearer ', '');
     
     if (!token) {
-      return ctx.unauthorized('No token provided');
+      ctx.unauthorized('No token provided');
+      return;
     }
 
-    // For mock setup, just verify it's not empty
-    if (token === 'mock-jwt-token') {
+    // Para setup mock, apenas verifica se não está vazio
+    if (token && token.startsWith('mock-jwt-token')) {
       ctx.send({ valid: true });
     } else {
       ctx.unauthorized('Invalid token');
