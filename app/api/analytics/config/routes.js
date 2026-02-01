@@ -12,8 +12,7 @@ module.exports = {
       path: '/analytics/pilgrim',
       handler: 'analytics.getPilgrimAnalytics',
       config: {
-        auth: false,
-        policies: ['is-authenticated']
+        auth: false
       }
     },
     {
@@ -21,8 +20,7 @@ module.exports = {
       path: '/analytics/manager',
       handler: 'analytics.getManagerAnalytics',
       config: {
-        auth: false,
-        policies: ['is-authenticated']
+        auth: false
       }
     },
     {
@@ -30,8 +28,7 @@ module.exports = {
       path: '/analytics/merchant',
       handler: 'analytics.getMerchantAnalytics',
       config: {
-        auth: false,
-        policies: ['is-authenticated']
+        auth: false
       }
     }
   ]
