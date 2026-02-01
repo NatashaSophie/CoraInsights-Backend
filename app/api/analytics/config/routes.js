@@ -1,3 +1,5 @@
+'use strict';
+
 /**
  * Analytics Routes
  * Define as rotas para os endpoints de analytics
@@ -10,7 +12,8 @@ module.exports = {
       path: '/analytics/pilgrim',
       handler: 'analytics.getPilgrimAnalytics',
       config: {
-        policies: []
+        auth: false,
+        policies: ['is-authenticated']
       }
     },
     {
@@ -18,7 +21,8 @@ module.exports = {
       path: '/analytics/manager',
       handler: 'analytics.getManagerAnalytics',
       config: {
-        policies: []
+        auth: false,
+        policies: ['is-authenticated']
       }
     },
     {
@@ -26,7 +30,8 @@ module.exports = {
       path: '/analytics/merchant',
       handler: 'analytics.getMerchantAnalytics',
       config: {
-        policies: []
+        auth: false,
+        policies: ['is-authenticated']
       }
     }
   ]
