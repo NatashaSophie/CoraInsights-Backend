@@ -5,7 +5,7 @@ module.exports = {
       path: '/dashboards/public',
       handler: 'dashboards.getPublicData',
       config: {
-        policies: []
+        auth: false
       }
     }
   ]
