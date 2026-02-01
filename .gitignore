@@ -64,8 +64,18 @@ typings/
 .DS_Store
 .idea
 
+# Strapi cache and build
 app/.cache
 app/build
 app/exports
 app/node_modules
-data
+
+# Data files and scripts
+app/data
+app/scripts
+
+# Temporary files
+*.tmp
+*.temp
+temp-*.txt
+*.backup
