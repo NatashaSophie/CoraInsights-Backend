@@ -5,16 +5,16 @@ module.exports = {
       path: '/auth/login',
       handler: 'auth.login',
       config: {
-        policies: [],
-      },
+        auth: false
+      }
     },
     {
       method: 'GET',
       path: '/auth/validate',
       handler: 'auth.validate',
       config: {
-        policies: [],
-      },
-    },
-  ],
+        auth: false
+      }
+    }
+  ]
 };
