@@ -18,13 +18,35 @@ module.exports = {
       if (!userId && ctx.request.headers.authorization) {
         // Token está presente no header, validar manualmente
         const token = ctx.request.headers.authorization?.replace('Bearer ', '');
+        console.log('[ANALYTICS-PILGRIM] Token recebido:', token ? token.substring(0, 50) + '...' : 'nenhum');
         if (token) {
           try {
             const jwt = require('jsonwebtoken');
-            const jwtSecret = strapi.config.get('server.admin.auth.secret') || strapi.config.get('server.app.keys')[0] || 'default-secret';
-            const decoded = jwt.verify(token, jwtSecret);
-            userId = decoded.id;
-            console.log('[ANALYTICS-PILGRIM] Usuário extraído do token:', userId);
+            // Tentar múltiplos secrets possíveis
+            const secrets = [
+              strapi.config.get('server.admin.auth.secret'),
+              strapi.config.get('server.app.keys')?.[0],
+              process.env.ADMIN_JWT_SECRET,
+              '7d5d7f3026d7ea4fc6b5499ed8a0c38a'
+            ].filter(Boolean);
+            
+            let decoded = null;
+            for (const secret of secrets) {
+              try {
+                decoded = jwt.verify(token, secret);
+                console.log('[ANALYTICS-PILGRIM] Token decodificado com sucesso');
+                break;
+              } catch (e) {
+                // Tentar próximo secret
+              }
+            }
+            
+            if (decoded) {
+              userId = decoded.id;
+              console.log('[ANALYTICS-PILGRIM] Usuário extraído do token:', userId);
+            } else {
+              console.log('[ANALYTICS-PILGRIM] Nenhum secret válido para decodificar o token');
+            }
           } catch (e) {
             console.log('[ANALYTICS-PILGRIM] Erro ao decodificar token:', e.message);
             // Token inválido, continuar com usuário anônimo
@@ -168,6 +190,44 @@ module.exports = {
     try {
       const { start, end } = ctx.query;
 
+      // Validar token (mesmo que manager tenha acesso a dados agregados)
+      let userId = ctx.state.user?.id;
+      if (!userId && ctx.request.headers.authorization) {
+        const token = ctx.request.headers.authorization?.replace('Bearer ', '');
+        console.log('[ANALYTICS-MANAGER] Token recebido:', token ? token.substring(0, 50) + '...' : 'nenhum');
+        if (token) {
+          try {
+            const jwt = require('jsonwebtoken');
+            const secrets = [
+              strapi.config.get('server.admin.auth.secret'),
+              strapi.config.get('server.app.keys')?.[0],
+              process.env.ADMIN_JWT_SECRET,
+              '7d5d7f3026d7ea4fc6b5499ed8a0c38a'
+            ].filter(Boolean);
+            
+            let decoded = null;
+            for (const secret of secrets) {
+              try {
+                decoded = jwt.verify(token, secret);
+                console.log('[ANALYTICS-MANAGER] Token decodificado com sucesso');
+                break;
+              } catch (e) {
+                // Tentar próximo secret
+              }
+            }
+            
+            if (decoded) {
+              userId = decoded.id;
+              console.log('[ANALYTICS-MANAGER] Usuário extraído do token:', userId);
+            } else {
+              console.log('[ANALYTICS-MANAGER] Nenhum secret válido para decodificar o token');
+            }
+          } catch (e) {
+            console.log('[ANALYTICS-MANAGER] Erro ao decodificar token:', e.message);
+          }
+        }
+      }
+
       // Validar datas
       const startDate = start ? new Date(start) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
       const endDate = end ? new Date(end) : new Date();
@@ -186,8 +246,8 @@ module.exports = {
       const trailStats = await strapi.connections.default.raw(`
         SELECT 
           COUNT(*) as total,
-          COUNT(CASE WHEN "publishedAt" IS NOT NULL THEN 1 END) as published,
-          COUNT(CASE WHEN "publishedAt" IS NULL THEN 1 END) as draft
+          COUNT(CASE WHEN "finishedAt" IS NOT NULL THEN 1 END) as published,
+          COUNT(CASE WHEN "finishedAt" IS NULL THEN 1 END) as draft
         FROM trails
       `);
 
@@ -278,6 +338,44 @@ module.exports = {
   async getMerchantAnalytics(ctx) {
     try {
       const { start, end, merchantId } = ctx.query;
+
+      // Validar token
+      let userId = ctx.state.user?.id;
+      if (!userId && ctx.request.headers.authorization) {
+        const token = ctx.request.headers.authorization?.replace('Bearer ', '');
+        console.log('[ANALYTICS-MERCHANT] Token recebido:', token ? token.substring(0, 50) + '...' : 'nenhum');
+        if (token) {
+          try {
+            const jwt = require('jsonwebtoken');
+            const secrets = [
+              strapi.config.get('server.admin.auth.secret'),
+              strapi.config.get('server.app.keys')?.[0],
+              process.env.ADMIN_JWT_SECRET,
+              '7d5d7f3026d7ea4fc6b5499ed8a0c38a'
+            ].filter(Boolean);
+            
+            let decoded = null;
+            for (const secret of secrets) {
+              try {
+                decoded = jwt.verify(token, secret);
+                console.log('[ANALYTICS-MERCHANT] Token decodificado com sucesso');
+                break;
+              } catch (e) {
+                // Tentar próximo secret
+              }
+            }
+            
+            if (decoded) {
+              userId = decoded.id;
+              console.log('[ANALYTICS-MERCHANT] Usuário extraído do token:', userId);
+            } else {
+              console.log('[ANALYTICS-MERCHANT] Nenhum secret válido para decodificar o token');
+            }
+          } catch (e) {
+            console.log('[ANALYTICS-MERCHANT] Erro ao decodificar token:', e.message);
+          }
+        }
+      }
       const userId = ctx.state.user?.id;
 
       if (!merchantId || !userId) {
