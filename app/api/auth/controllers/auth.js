@@ -54,9 +54,19 @@ module.exports = {
 
       console.log('[AUTH] Login successful for:', identifier, 'with userType:', user.userType);
 
-      // Retornar dados do usuário
+      // Gerar JWT real usando o Strapi
+      const jwt = require('jsonwebtoken');
+      const jwtSecret = strapi.config.get('server.admin.auth.secret') || strapi.config.get('server.app.keys')[0] || 'default-secret';
+      
+      const token = jwt.sign(
+        { id: user.id, email: user.email },
+        jwtSecret,
+        { expiresIn: '7d' }
+      );
+
+      // Retornar dados do usuário com token JWT real
       ctx.send({
-        jwt: 'mock-jwt-token-' + user.id,
+        jwt: token,
         user: {
           id: user.id,
           email: user.email,

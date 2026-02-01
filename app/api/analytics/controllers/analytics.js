@@ -20,9 +20,13 @@ module.exports = {
         const token = ctx.request.headers.authorization?.replace('Bearer ', '');
         if (token) {
           try {
-            const decoded = require('jsonwebtoken').verify(token, strapi.config.get('server.admin.auth.secret') || 'secret-key');
+            const jwt = require('jsonwebtoken');
+            const jwtSecret = strapi.config.get('server.admin.auth.secret') || strapi.config.get('server.app.keys')[0] || 'default-secret';
+            const decoded = jwt.verify(token, jwtSecret);
             userId = decoded.id;
+            console.log('[ANALYTICS-PILGRIM] Usuário extraído do token:', userId);
           } catch (e) {
+            console.log('[ANALYTICS-PILGRIM] Erro ao decodificar token:', e.message);
             // Token inválido, continuar com usuário anônimo
           }
         }
@@ -30,6 +34,7 @@ module.exports = {
 
       // Se não há usuário autenticado, retornar dados vazios
       if (!userId) {
+        console.log('[ANALYTICS-PILGRIM] Nenhum userId encontrado, retornando dados vazios');
         return ctx.send({
           trails: { total: 0, active: 0, completed: 0 },
           routes: { total: 0, completed: 0, percentage: 0 },
