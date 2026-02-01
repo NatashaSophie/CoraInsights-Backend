@@ -5,6 +5,74 @@
 
 module.exports = {
   /**
+   * Método helper para validar e extrair userId do token JWT
+   * @param {Object} ctx - Contexto Strapi
+   * @param {String} userType - Tipo de usuário para logs (PILGRIM, MANAGER, MERCHANT)
+   * @returns {Number|null} - userId ou null se não validado
+   */
+  async getUserIdFromToken(ctx, userType = 'UNKNOWN') {
+    // Tentar buscar usuário já autenticado
+    let userId = ctx.state.user?.id;
+    if (userId) {
+      console.log(`[ANALYTICS-${userType}] UserId obtido do ctx.state:`, userId);
+      return userId;
+    }
+
+    // Token no header Authorization
+    if (!ctx.request.headers.authorization) {
+      console.log(`[ANALYTICS-${userType}] Nenhum header Authorization encontrado`);
+      return null;
+    }
+
+    const authHeader = ctx.request.headers.authorization;
+    const token = authHeader?.replace('Bearer ', '');
+    
+    console.log(`[ANALYTICS-${userType}] Auth header:`, authHeader ? authHeader.substring(0, 100) + '...' : 'nenhum');
+    console.log(`[ANALYTICS-${userType}] Token recebido:`, token ? token.substring(0, 100) + '...' : 'nenhum');
+
+    if (!token || token.length < 10) {
+      console.log(`[ANALYTICS-${userType}] Token muito curto ou vazio`);
+      return null;
+    }
+
+    try {
+      const jwt = require('jsonwebtoken');
+      const secrets = [
+        strapi.config.get('server.admin.auth.secret'),
+        strapi.config.get('server.app.keys')?.[0],
+        process.env.ADMIN_JWT_SECRET,
+        '7d5d7f3026d7ea4fc6b5499ed8a0c38a'
+      ].filter(Boolean);
+
+      console.log(`[ANALYTICS-${userType}] Tentando decodificar com ${secrets.length} secrets`);
+      
+      let decoded = null;
+      for (const secret of secrets) {
+        try {
+          decoded = jwt.verify(token, secret);
+          console.log(`[ANALYTICS-${userType}] Token decodificado com sucesso`);
+          break;
+        } catch (e) {
+          // Tentar próximo secret
+          console.log(`[ANALYTICS-${userType}] Secret falhou, tentando próximo...`);
+        }
+      }
+
+      if (decoded) {
+        userId = decoded.id;
+        console.log(`[ANALYTICS-${userType}] UserId extraído do token:`, userId);
+        return userId;
+      } else {
+        console.log(`[ANALYTICS-${userType}] Nenhum secret válido para decodificar o token`);
+        return null;
+      }
+    } catch (e) {
+      console.log(`[ANALYTICS-${userType}] Erro ao decodificar token:`, e.message);
+      return null;
+    }
+  },
+
+  /**
    * GET /api/analytics/pilgrim
    * Retorna estatísticas do peregrino logado
    */
@@ -12,47 +80,8 @@ module.exports = {
     try {
       const { start, end } = ctx.query;
       
-      // Tentar buscar usuário do token JWT no header
-      let userId = ctx.state.user?.id;
-      
-      if (!userId && ctx.request.headers.authorization) {
-        // Token está presente no header, validar manualmente
-        const token = ctx.request.headers.authorization?.replace('Bearer ', '');
-        console.log('[ANALYTICS-PILGRIM] Token recebido:', token ? token.substring(0, 50) + '...' : 'nenhum');
-        if (token) {
-          try {
-            const jwt = require('jsonwebtoken');
-            // Tentar múltiplos secrets possíveis
-            const secrets = [
-              strapi.config.get('server.admin.auth.secret'),
-              strapi.config.get('server.app.keys')?.[0],
-              process.env.ADMIN_JWT_SECRET,
-              '7d5d7f3026d7ea4fc6b5499ed8a0c38a'
-            ].filter(Boolean);
-            
-            let decoded = null;
-            for (const secret of secrets) {
-              try {
-                decoded = jwt.verify(token, secret);
-                console.log('[ANALYTICS-PILGRIM] Token decodificado com sucesso');
-                break;
-              } catch (e) {
-                // Tentar próximo secret
-              }
-            }
-            
-            if (decoded) {
-              userId = decoded.id;
-              console.log('[ANALYTICS-PILGRIM] Usuário extraído do token:', userId);
-            } else {
-              console.log('[ANALYTICS-PILGRIM] Nenhum secret válido para decodificar o token');
-            }
-          } catch (e) {
-            console.log('[ANALYTICS-PILGRIM] Erro ao decodificar token:', e.message);
-            // Token inválido, continuar com usuário anônimo
-          }
-        }
-      }
+      // Validar token e extrair userId
+      const userId = await this.getUserIdFromToken(ctx, 'PILGRIM');
 
       // Se não há usuário autenticado, retornar dados vazios
       if (!userId) {
@@ -190,43 +219,8 @@ module.exports = {
     try {
       const { start, end } = ctx.query;
 
-      // Validar token (mesmo que manager tenha acesso a dados agregados)
-      let userId = ctx.state.user?.id;
-      if (!userId && ctx.request.headers.authorization) {
-        const token = ctx.request.headers.authorization?.replace('Bearer ', '');
-        console.log('[ANALYTICS-MANAGER] Token recebido:', token ? token.substring(0, 50) + '...' : 'nenhum');
-        if (token) {
-          try {
-            const jwt = require('jsonwebtoken');
-            const secrets = [
-              strapi.config.get('server.admin.auth.secret'),
-              strapi.config.get('server.app.keys')?.[0],
-              process.env.ADMIN_JWT_SECRET,
-              '7d5d7f3026d7ea4fc6b5499ed8a0c38a'
-            ].filter(Boolean);
-            
-            let decoded = null;
-            for (const secret of secrets) {
-              try {
-                decoded = jwt.verify(token, secret);
-                console.log('[ANALYTICS-MANAGER] Token decodificado com sucesso');
-                break;
-              } catch (e) {
-                // Tentar próximo secret
-              }
-            }
-            
-            if (decoded) {
-              userId = decoded.id;
-              console.log('[ANALYTICS-MANAGER] Usuário extraído do token:', userId);
-            } else {
-              console.log('[ANALYTICS-MANAGER] Nenhum secret válido para decodificar o token');
-            }
-          } catch (e) {
-            console.log('[ANALYTICS-MANAGER] Erro ao decodificar token:', e.message);
-          }
-        }
-      }
+      // Validar token e extrair userId
+      const userId = await this.getUserIdFromToken(ctx, 'MANAGER');
 
       // Validar datas
       const startDate = start ? new Date(start) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
@@ -339,44 +333,8 @@ module.exports = {
     try {
       const { start, end, merchantId } = ctx.query;
 
-      // Validar token
-      let userId = ctx.state.user?.id;
-      if (!userId && ctx.request.headers.authorization) {
-        const token = ctx.request.headers.authorization?.replace('Bearer ', '');
-        console.log('[ANALYTICS-MERCHANT] Token recebido:', token ? token.substring(0, 50) + '...' : 'nenhum');
-        if (token) {
-          try {
-            const jwt = require('jsonwebtoken');
-            const secrets = [
-              strapi.config.get('server.admin.auth.secret'),
-              strapi.config.get('server.app.keys')?.[0],
-              process.env.ADMIN_JWT_SECRET,
-              '7d5d7f3026d7ea4fc6b5499ed8a0c38a'
-            ].filter(Boolean);
-            
-            let decoded = null;
-            for (const secret of secrets) {
-              try {
-                decoded = jwt.verify(token, secret);
-                console.log('[ANALYTICS-MERCHANT] Token decodificado com sucesso');
-                break;
-              } catch (e) {
-                // Tentar próximo secret
-              }
-            }
-            
-            if (decoded) {
-              userId = decoded.id;
-              console.log('[ANALYTICS-MERCHANT] Usuário extraído do token:', userId);
-            } else {
-              console.log('[ANALYTICS-MERCHANT] Nenhum secret válido para decodificar o token');
-            }
-          } catch (e) {
-            console.log('[ANALYTICS-MERCHANT] Erro ao decodificar token:', e.message);
-          }
-        }
-      }
-      const userId = ctx.state.user?.id;
+      // Validar token e extrair userId
+      const userId = await this.getUserIdFromToken(ctx, 'MERCHANT');
 
       if (!merchantId || !userId) {
         return ctx.badRequest('merchantId e autenticação são obrigatórios');
