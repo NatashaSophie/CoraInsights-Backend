@@ -13,8 +13,16 @@ module.exports = {
       const { start, end } = ctx.query;
       const userId = ctx.state.user?.id;
 
+      // Se não há usuário autenticado, retornar dados vazios
       if (!userId) {
-        return ctx.unauthorized('Usuário não autenticado');
+        return ctx.send({
+          trails: { total: 0, active: 0, completed: 0 },
+          routes: { total: 0, completed: 0, percentage: 0 },
+          routeProgress: [],
+          recentActivity: [],
+          timeStats: { avgHours: 0, minHours: 0, maxHours: 0 },
+          achievements: []
+        });
       }
 
       // Validar datas
