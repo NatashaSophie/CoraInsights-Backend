@@ -1,8 +1,7 @@
 'use strict';
 
-module.exports = async () => {
+module.exports = async (strapi) => {
   // Registrar rotas customizadas de autenticação dinamicamente
-  const dashboardsController = require('../api/dashboards/controllers/dashboards');
   
   // Registrar rota POST /api/auth/login
   strapi.router.post('/api/auth/login', async (ctx) => {
