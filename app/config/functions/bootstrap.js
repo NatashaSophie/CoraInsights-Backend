@@ -1,7 +1,5 @@
 'use strict';
 
-const bcrypt = require('bcryptjs');
-
 /**
  * An asynchronous bootstrap function that runs before
  * your application gets started.
@@ -12,84 +10,45 @@ const bcrypt = require('bcryptjs');
  * See more details here: https://strapi.io/documentation/developer-docs/latest/setup-deployment-guides/configurations.html#bootstrap
  */
 
-module.exports = async () => {
-  // Registrar rotas customizadas de autenticação
-  console.log('[BOOTSTRAP] Registering auth routes...');
-
-  // Executar migração de roles
-  try {
-    console.log('[MIGRATION] Iniciando atualização de roles...');
-    
-    // Primeiro, vamos verificar as roles existentes
-    const rolesResult = await strapi.connections.default.raw(`
-      SELECT id, name FROM "users-permissions_role" ORDER BY id
-    `);
-
-    console.log('[MIGRATION] Roles disponíveis:');
-    rolesResult.rows.forEach(role => {
-      console.log(`  ID: ${role.id}, Name: ${role.name}`);
-    });
-
-    console.log('\n[MIGRATION] Atualizando roles baseado em userType...');
-
-    // Update pilgrim -> role 1
-    const updatePilgrim = await strapi.connections.default.raw(`
-      UPDATE "users-permissions_user" 
-      SET role = 1 
-      WHERE "userType" = 'pilgrim' OR "userType" = 'peregrino'
-    `);
-    console.log(`[MIGRATION] Peregrinos atualizados: ${updatePilgrim.rowCount}`);
-
-    // Update manager -> role 2
-    const updateManager = await strapi.connections.default.raw(`
-      UPDATE "users-permissions_user" 
-      SET role = 2 
-      WHERE "userType" = 'manager' OR "userType" = 'gestor'
-    `);
-    console.log(`[MIGRATION] Gestores atualizados: ${updateManager.rowCount}`);
-
-    // Update merchant -> role 3
-    const updateMerchant = await strapi.connections.default.raw(`
-      UPDATE "users-permissions_user" 
-      SET role = 3 
-      WHERE "userType" = 'merchant' OR "userType" = 'comerciante'
-    `);
-    console.log(`[MIGRATION] Comerciantes atualizados: ${updateMerchant.rowCount}`);
-
-    // Verificar o resultado
-    console.log('\n[MIGRATION] Verificando atualização:');
-    const checkResult = await strapi.connections.default.raw(`
-      SELECT "userType", role, COUNT(*) as count 
-      FROM "users-permissions_user" 
-      GROUP BY "userType", role 
-      ORDER BY role
-    `);
-
-    checkResult.rows.forEach(row => {
-      console.log(`  ${row.userType} -> role ${row.role}: ${row.count} usuários`);
-    });
-
-    console.log('[MIGRATION] ✅ Atualização concluída com sucesso!');
-
-  } catch (error) {
-    console.error('[BOOTSTRAP] ❌ Erro ao executar migração de roles:', error.message);
-  }
-
-  // Verificar estrutura da tabela ao iniciar
-  try {
-    const result = await strapi.connections.default.raw(`
-      SELECT * FROM "users-permissions_user" LIMIT 1
-    `);
-    
-    if (result.rows.length > 0) {
-      const user = result.rows[0];
-      console.log('[BOOTSTRAP] Columns in users-permissions_user:', Object.keys(user).join(', '));
-      console.log('[BOOTSTRAP] Sample user:', user);
+module.exports = async () => {  // ============================================================================
+  // PATCH CRÍTICO: Popular admin roles durante login
+  // ============================================================================
+  // Aguardar 1 segundo para garantir que todos os serviços estejam carregados
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  // Sobrescrever o método findOne do query builder do admin user
+  const originalFindOne = strapi.query('user', 'admin').findOne;
+  
+  strapi.query('user', 'admin').findOne = async function(params, populate = []) {
+    // Se estiver buscando por email E não estiver populando roles, adicionar roles
+    if (params && params.email && !populate.includes('roles')) {
+      populate = [...(Array.isArray(populate) ? populate : []), 'roles'];
     }
-  } catch (e) {
-    console.log('[BOOTSTRAP] Could not check table structure:', e.message);
+    
+    const result = await originalFindOne.call(this, params, populate);
+
+    return result;
+  };
+
+  try {
+    const roleService = strapi.admin.services.role;
+    const userService = strapi.admin.services.user;
+    const superAdminRole = await roleService.getSuperAdmin();
+
+    if (superAdminRole) {
+      const usersWithoutRole = await userService.countUsersWithoutRole();
+
+      if (usersWithoutRole > 0) {
+        await userService.assignARoleToAll(superAdminRole.id);
+      }
+    }
+  } catch (error) {
+    // no-op
   }
 
+  // ATENÇÃO: Rotas customizadas comentadas para permitir registro inicial do admin no Strapi
+  // Para reabilitar essas rotas customizadas após criar o admin, basta descomentar este bloco
+  /*
   // Middleware para rota POST /api/auth/login
   strapi.router.post('/api/auth/login', async (ctx, next) => {
     console.log('[AUTH ROUTE] ========== LOGIN REQUEST RECEIVED ==========');
@@ -250,4 +209,6 @@ module.exports = async () => {
   });
   
   console.log('[BOOTSTRAP] Auth routes registered successfully');
+  */
+  
 };
