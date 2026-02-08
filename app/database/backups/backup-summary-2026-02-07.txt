@@ -1,0 +1,43 @@
+============================================================
+BACKUP DO BANCO DE DADOS - 07/02/2026, 17:41:12
+============================================================
+
+CONFIGURAÇÃO:
+  Database: postgres
+  Host: localhost:5432
+  User: postgres
+
+TOTAL DE TABELAS: 26
+
+  - auth                                              0 linhas
+  - certificates                                      0 linhas
+  - checkpoints                                       0 linhas
+  - checkpoints__estabelecimentos                     0 linhas
+  - checkpoints_components                            0 linhas
+  - components_general_avaliations                    0 linhas
+  - components_general_locations                      0 linhas
+  - components_general_places                         0 linhas
+  - components_general_places_components              0 linhas
+  - core_store                                       45 linhas
+  - establishments                                    0 linhas
+  - establishments_components                         0 linhas
+  - i18n_locales                                      1 linhas
+  - strapi_administrator                              0 linhas
+  - strapi_permission                               143 linhas
+  - strapi_role                                       3 linhas
+  - strapi_users_roles                                0 linhas
+  - strapi_webhooks                                   0 linhas
+  - trail_parts                                       0 linhas
+  - trail_routes                                      0 linhas
+  - trails                                            0 linhas
+  - upload_file                                       0 linhas
+  - upload_file_morph                                 0 linhas
+  - users-permissions_permission                    282 linhas
+  - users-permissions_role                            2 linhas
+  - users-permissions_user                            0 linhas
+
+============================================================
+ARQUIVOS GERADOS:
+  Backup SQL: backups/postgres-backup-2026-02-07.sql
+  CSVs: csv-exports/*.csv
+============================================================

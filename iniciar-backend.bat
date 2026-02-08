@@ -1,5 +1,5 @@
 @echo off
-cd /d D:\CoraApp\caminho-de-cora-backend
+cd /d D:\CoraApp\caminho-de-cora-backend\app
 
 echo.
 echo ========================================
