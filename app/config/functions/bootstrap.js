@@ -46,6 +46,46 @@ module.exports = async () => {  // =============================================
     // no-op
   }
 
+  try {
+    const roleQuery = strapi.query('role', 'users-permissions');
+    const permissionQuery = strapi.query('permission', 'users-permissions');
+    const publicRole = await roleQuery.findOne({ type: 'public' });
+
+    if (publicRole) {
+      const dashboardActions = [
+        'getpublicdata',
+        'login',
+        'getpilgrmanalytics',
+        'getmanageranalytics',
+        'getmerchantanalytics',
+      ];
+
+      for (const action of dashboardActions) {
+        const existing = await permissionQuery.findOne({
+          type: 'application',
+          controller: 'dashboards',
+          action,
+          role: publicRole.id,
+        });
+
+        if (!existing) {
+          await permissionQuery.create({
+            type: 'application',
+            controller: 'dashboards',
+            action,
+            enabled: true,
+            policy: '',
+            role: publicRole.id,
+          });
+        } else if (!existing.enabled) {
+          await permissionQuery.update({ id: existing.id }, { enabled: true });
+        }
+      }
+    }
+  } catch (error) {
+    // no-op
+  }
+
   // ATENÇÃO: Rotas customizadas comentadas para permitir registro inicial do admin no Strapi
   // Para reabilitar essas rotas customizadas após criar o admin, basta descomentar este bloco
   /*

@@ -24,6 +24,18 @@ database/
 - **Conteúdo**: Resumo com contagem de linhas de cada tabela
 - **Formato**: Texto simples
 
+### Gerar Backup e CSVs via Script
+Para gerar um backup SQL (data-only) e exportar todas as tabelas em CSV:
+
+```bash
+node scripts/maintenance/backup-and-export.js
+```
+
+O script cria:
+- `database/backups/postgres-backup-YYYY-MM-DD.sql`
+- `database/backups/backup-summary-YYYY-MM-DD.txt`
+- `database/exports/YYYY-MM-DD_HH-MM-SS/` (CSVs + _RESUMO)
+
 ## 📊 Exportações CSV (csv-exports/)
 
 Cada arquivo CSV contém os dados de uma tabela:

@@ -11,16 +11,16 @@ module.exports = {
 
     try {
       console.log('[AUTH] Login attempt for:', identifier);
-      
+
       // Buscar usuário no banco
       let user = null;
-      
+
       try {
         const result = await strapi.db.connection.raw(
           'SELECT id, email, username, password, userType FROM up_users WHERE email = ? LIMIT 1',
           [identifier]
         );
-        
+
         user = result.rows && result.rows.length > 0 ? result.rows[0] : result[0];
         console.log('[AUTH] User found:', user ? user.email : 'none');
       } catch (e) {
@@ -45,7 +45,7 @@ module.exports = {
       // Validar userType: apenas pilgrim, manager e merchant podem fazer login no dashboard
       const allowedRoles = ['pilgrim', 'manager', 'merchant'];
       const userRole = (user.userType || '').toLowerCase();
-      
+
       if (!allowedRoles.includes(userRole)) {
         console.log('[AUTH] Unauthorized userType for:', identifier, 'userType:', userRole);
         ctx.forbidden('Only pilgrim, manager and merchant users can access the dashboard');
@@ -56,13 +56,12 @@ module.exports = {
 
       // Gerar JWT real usando o Strapi
       const jwt = require('jsonwebtoken');
-      const jwtSecret = strapi.config.get('server.admin.auth.secret') || strapi.config.get('server.app.keys')[0] || 'default-secret';
-      
-      const token = jwt.sign(
-        { id: user.id, email: user.email },
-        jwtSecret,
-        { expiresIn: '7d' }
-      );
+      const jwtSecret =
+        strapi.config.get('server.admin.auth.secret') ||
+        strapi.config.get('server.app.keys')[0] ||
+        'default-secret';
+
+      const token = jwt.sign({ id: user.id, email: user.email }, jwtSecret, { expiresIn: '7d' });
 
       // Retornar dados do usuário com token JWT real
       ctx.send({
@@ -71,8 +70,8 @@ module.exports = {
           id: user.id,
           email: user.email,
           username: user.username || user.email,
-          userType: user.userType || 'user'
-        }
+          userType: user.userType || 'user',
+        },
       });
     } catch (error) {
       console.error('[AUTH] Login error:', error);
@@ -82,7 +81,7 @@ module.exports = {
 
   async validate(ctx) {
     const token = ctx.get('Authorization')?.replace('Bearer ', '');
-    
+
     if (!token) {
       ctx.unauthorized('No token provided');
       return;
@@ -93,5 +92,5 @@ module.exports = {
     } else {
       ctx.unauthorized('Invalid token');
     }
-  }
+  },
 };

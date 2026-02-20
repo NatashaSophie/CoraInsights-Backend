@@ -13,8 +13,14 @@ module.exports = (strapi) => {
     async bootstrap() {
       // Middleware para permitir acesso público
       strapi.server.app.use(async (ctx, next) => {
-        // Permitir GET /dashboards/public sem autenticação
-        if (ctx.path === '/dashboards/public' && ctx.method === 'GET') {
+        const isPublicDashboardRoute =
+          (ctx.path === '/dashboards/public' && ctx.method === 'GET') ||
+          (ctx.path === '/dashboards/auth/login' && ctx.method === 'POST') ||
+          (ctx.path === '/dashboards/analytics/pilgrim' && ctx.method === 'GET') ||
+          (ctx.path === '/dashboards/analytics/manager' && ctx.method === 'GET') ||
+          (ctx.path === '/dashboards/analytics/merchant' && ctx.method === 'GET');
+
+        if (isPublicDashboardRoute) {
           ctx.state.isPublic = true;
         }
         await next();

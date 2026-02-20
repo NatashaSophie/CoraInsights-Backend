@@ -26,9 +26,15 @@ module.exports = {
 
     const authHeader = ctx.request.headers.authorization;
     const token = authHeader?.replace('Bearer ', '');
-    
-    console.log(`[ANALYTICS-${userType}] Auth header:`, authHeader ? authHeader.substring(0, 100) + '...' : 'nenhum');
-    console.log(`[ANALYTICS-${userType}] Token recebido:`, token ? token.substring(0, 100) + '...' : 'nenhum');
+
+    console.log(
+      `[ANALYTICS-${userType}] Auth header:`,
+      authHeader ? authHeader.substring(0, 100) + '...' : 'nenhum'
+    );
+    console.log(
+      `[ANALYTICS-${userType}] Token recebido:`,
+      token ? token.substring(0, 100) + '...' : 'nenhum'
+    );
 
     if (!token || token.length < 10) {
       console.log(`[ANALYTICS-${userType}] Token muito curto ou vazio`);
@@ -45,7 +51,7 @@ module.exports = {
       ].filter(Boolean);
 
       console.log(`[ANALYTICS-${userType}] Tentando decodificar com ${secrets.length} secrets`);
-      
+
       let decoded = null;
       for (const secret of secrets) {
         try {
@@ -79,7 +85,7 @@ module.exports = {
   async getPilgrimAnalytics(ctx) {
     try {
       const { start, end } = ctx.query;
-      
+
       // Validar token e extrair userId
       const userId = await this.getUserIdFromToken(ctx, 'PILGRIM');
 
@@ -102,9 +108,9 @@ module.exports = {
 
       // 1. TRILHAS DO PEREGRINO - Total, Ativas e Completadas
       const pilgrimage = await strapi.query('trails').findOne({ user: userId });
-      
+
       const allTrails = await strapi.connections.default.raw(`
-        SELECT 
+        SELECT
           COUNT(*) as total,
           COUNT(CASE WHEN "finishedAt" IS NULL THEN 1 END) as active,
           COUNT(CASE WHEN "finishedAt" IS NOT NULL THEN 1 END) as completed
@@ -116,7 +122,7 @@ module.exports = {
 
       // 2. TRECHOS COMPLETADOS DO PEREGRINO
       const routeStats = await strapi.connections.default.raw(`
-        SELECT 
+        SELECT
           COUNT(*) as total,
           COUNT(CASE WHEN "finishedAt" IS NOT NULL THEN 1 END) as completed
         FROM trail_routes
@@ -127,14 +133,14 @@ module.exports = {
 
       // 3. PROGRESSO POR TRECHO
       const routeProgress = await strapi.connections.default.raw(`
-        SELECT 
+        SELECT
           tp.id,
           tp.name,
           tp.distance,
           tp.time,
           COUNT(DISTINCT tr.id) as completions
         FROM trail_parts tp
-        LEFT JOIN trail_routes tr ON tr.route = tp.id 
+        LEFT JOIN trail_routes tr ON tr.route = tp.id
           AND tr.trail IN (SELECT id FROM trails WHERE "user" = $1)
           AND tr."finishedAt" IS NOT NULL
         GROUP BY tp.id, tp.name, tp.distance, tp.time
@@ -143,7 +149,7 @@ module.exports = {
 
       // 4. ATIVIDADE RECENTE (últimos 30 dias)
       const recentActivity = await strapi.connections.default.raw(`
-        SELECT 
+        SELECT
           TO_CHAR(tr."createdAt"::date, 'YYYY-MM-DD') as date,
           COUNT(*) as completions
         FROM trail_routes tr
@@ -157,7 +163,7 @@ module.exports = {
 
       // 5. ESTATÍSTICAS DE TEMPO
       const timeStats = await strapi.connections.default.raw(`
-        SELECT 
+        SELECT
           AVG(EXTRACT(EPOCH FROM (tr."finishedAt" - tr."createdAt")) / 3600) as avg_hours,
           MIN(EXTRACT(EPOCH FROM (tr."finishedAt" - tr."createdAt")) / 3600) as min_hours,
           MAX(EXTRACT(EPOCH FROM (tr."finishedAt" - tr."createdAt")) / 3600) as max_hours
@@ -228,7 +234,7 @@ module.exports = {
 
       // 1. TOTAL DE USUÁRIOS (por tipo)
       const userStats = await strapi.connections.default.raw(`
-        SELECT 
+        SELECT
           "userType",
           COUNT(*) as count
         FROM "users-permissions_user"
@@ -238,7 +244,7 @@ module.exports = {
 
       // 2. TRILHAS (total, publicadas, rascunhos)
       const trailStats = await strapi.connections.default.raw(`
-        SELECT 
+        SELECT
           COUNT(*) as total,
           COUNT(CASE WHEN "finishedAt" IS NOT NULL THEN 1 END) as published,
           COUNT(CASE WHEN "finishedAt" IS NULL THEN 1 END) as draft
@@ -249,7 +255,7 @@ module.exports = {
 
       // 3. ATIVIDADE RECENTE (cadastros/conclusões)
       const activity = await strapi.connections.default.raw(`
-        SELECT 
+        SELECT
           TO_CHAR(tr."createdAt"::date, 'YYYY-MM-DD') as date,
           COUNT(CASE WHEN tr."finishedAt" IS NOT NULL THEN 1 END) as completions
         FROM trail_routes tr
@@ -261,7 +267,7 @@ module.exports = {
 
       // 4. TOP TRILHAS (mais populares)
       const topTrails = await strapi.connections.default.raw(`
-        SELECT 
+        SELECT
           t.id,
           t.name,
           COUNT(DISTINCT tr.id) as route_completions,
@@ -275,8 +281,8 @@ module.exports = {
 
       // 5. TAXA DE CONCLUSÃO GERAL
       const completionRate = await strapi.connections.default.raw(`
-        SELECT 
-          COUNT(CASE WHEN tr."finishedAt" IS NOT NULL THEN 1 END)::float / 
+        SELECT
+          COUNT(CASE WHEN tr."finishedAt" IS NOT NULL THEN 1 END)::float /
           COUNT(*) * 100 as percentage
         FROM trail_routes tr
       `);
@@ -285,7 +291,7 @@ module.exports = {
 
       // 6. PEREGRINOS ATIVOS
       const activeUsers = await strapi.connections.default.raw(`
-        SELECT 
+        SELECT
           COUNT(DISTINCT t."user") as count
         FROM trails t
         WHERE t."finishedAt" IS NULL
@@ -345,7 +351,7 @@ module.exports = {
       const endDate = end ? new Date(end) : new Date();
 
       // 1. DADOS DO ESTABELECIMENTO
-      const establishment = await strapi.query('establishment').findOne({ 
+      const establishment = await strapi.query('establishment').findOne({
         id: merchantId,
         user: userId
       });
@@ -356,7 +362,7 @@ module.exports = {
 
       // 2. VISITANTES/CLIENTES
       const visitorsData = await strapi.connections.default.raw(`
-        SELECT 
+        SELECT
           COUNT(DISTINCT cp."user") as total_visitors,
           COUNT(DISTINCT CASE WHEN cp."createdAt" >= $1 THEN cp."user" END) as recent_visitors
         FROM checkpoints cp
@@ -367,7 +373,7 @@ module.exports = {
 
       // 3. ATIVIDADE (visitantes por dia)
       const activityData = await strapi.connections.default.raw(`
-        SELECT 
+        SELECT
           TO_CHAR(cp."createdAt"::date, 'YYYY-MM-DD') as date,
           COUNT(*) as visits
         FROM checkpoints cp
@@ -380,7 +386,7 @@ module.exports = {
 
       // 4. HORÁRIOS DE PICO
       const peakHours = await strapi.connections.default.raw(`
-        SELECT 
+        SELECT
           EXTRACT(HOUR FROM cp."createdAt") as hour,
           COUNT(*) as visits
         FROM checkpoints cp
@@ -395,8 +401,8 @@ module.exports = {
       // 5. PRODUTOS/SERVIÇOS (se existir tabela)
       let services = [];
       try {
-        const servicesData = await strapi.query('service').find({ 
-          establishment: merchantId 
+        const servicesData = await strapi.query('service').find({
+          establishment: merchantId
         });
         services = servicesData || [];
       } catch (e) {

@@ -1,4 +1,30 @@
+const dashboardsAuth = require('../../../../dashboards/auth');
+const dashboardsAnalytics = require('../../../../dashboards/analytics');
+
 module.exports = {
+  async login(ctx) {
+    const result = await dashboardsAuth.login(ctx.request.body || {});
+
+    if (!result.ok) {
+      ctx.unauthorized(result.error || 'Invalid credentials');
+      return;
+    }
+
+    ctx.send(result.data);
+  },
+
+  async getPilgrimAnalytics(ctx) {
+    await dashboardsAnalytics.getPilgrimAnalytics(ctx);
+  },
+
+  async getManagerAnalytics(ctx) {
+    await dashboardsAnalytics.getManagerAnalytics(ctx);
+  },
+
+  async getMerchantAnalytics(ctx) {
+    await dashboardsAnalytics.getMerchantAnalytics(ctx);
+  },
+
   async getPublicData(ctx) {
     try {
       console.log('Dashboard API called');
@@ -50,7 +76,7 @@ module.exports = {
           SELECT 
             t.id as trail_id,
             CASE WHEN t."finishedAt" IS NULL THEN 0 ELSE 1 END as is_finished,
-            COUNT(DISTINCT tr.route) as routes_completed
+            CASE WHEN t."finishedAt" IS NULL THEN 0 ELSE COUNT(DISTINCT tr.route) END as routes_completed
           FROM trails t
           LEFT JOIN trail_routes tr ON tr.trail = t.id AND tr."finishedAt" IS NOT NULL
           GROUP BY t.id, t."finishedAt"
@@ -86,11 +112,11 @@ module.exports = {
           COUNT(DISTINCT t.id) as total_trails,
           COUNT(DISTINCT CASE WHEN t."finishedAt" IS NOT NULL THEN t.id END) as completed_trails,
           COUNT(DISTINCT CASE WHEN tr."finishedAt" IS NOT NULL THEN tr.id END) as completed_routes,
-          MAX(CASE WHEN (
+          COUNT(DISTINCT CASE WHEN (
             SELECT COUNT(DISTINCT tr2.route) 
             FROM trail_routes tr2 
             WHERE tr2.trail = t.id AND tr2."finishedAt" IS NOT NULL
-          ) = 13 THEN 1 ELSE 0 END) as has_full_path
+          ) = 13 THEN t.id ELSE NULL END) as has_full_path
         FROM "users-permissions_user" u
         LEFT JOIN trails t ON t."user" = u.id
         LEFT JOIN trail_routes tr ON tr.trail = t.id
@@ -99,65 +125,144 @@ module.exports = {
         HAVING COUNT(DISTINCT t.id) > 0
       `);
 
-      // Buscar os tempos de cada peregrino a partir do trackedPath
+      const pilgrimModalities = await strapi.connections.default.raw(`
+        SELECT 
+          t.id as trail_id,
+          t."user" as user_id,
+          t.modality,
+          t."finishedAt"
+        FROM trails t
+      `);
+
+      // Buscar os tempos de cada peregrino a partir de created_at e finishedAt das trail_routes
       const pilgrimTimes = await strapi.connections.default.raw(`
         SELECT 
           t."user" as user_id,
-          tr."trackedPath"
+          tr.trail as trail_id,
+          tr."created_at" as created_at,
+          tr."finishedAt" as finished_at
         FROM trail_routes tr
         JOIN trails t ON tr.trail = t.id
-        WHERE tr."finishedAt" IS NOT NULL AND tr."trackedPath" IS NOT NULL
+        WHERE tr."finishedAt" IS NOT NULL AND tr."created_at" IS NOT NULL
       `);
 
-      // Calcular tempo total por usuário a partir dos timestamps do trackedPath
+      // Calcular tempo total por usuário a partir dos timestamps do created_at e finishedAt
       const userHoursMap = {};
       for (const row of pilgrimTimes.rows) {
         const userId = row.user_id;
-        const path = row.trackedPath;
-        if (path && path.length >= 2) {
-          const startTime = path[0]?.timestamp || 0;
-          const endTime = path[path.length - 1]?.timestamp || 0;
-          const durationHours = (endTime - startTime) / 1000 / 3600;
-          if (durationHours > 0 && durationHours < 24) { // Filtrar durações razoáveis (menos de 24h por trecho)
-            userHoursMap[userId] = (userHoursMap[userId] || 0) + durationHours;
-          }
+        const startTime = new Date(row.created_at).getTime();
+        const endTime = new Date(row.finished_at).getTime();
+        if (Number.isNaN(startTime) || Number.isNaN(endTime)) continue;
+        const durationHours = (endTime - startTime) / 1000 / 3600;
+        if (durationHours > 0) {
+          userHoursMap[userId] = (userHoursMap[userId] || 0) + durationHours;
         }
       }
+
+      const modalityMap = {};
+      const modalityOrderMap = {};
+
+      const normalizeModalityForRoutes = (value) => {
+        if (!value) return null;
+        const normalized = String(value).toLowerCase();
+        if (normalized === 'pedestre' || normalized === 'foot') return 'pedestre';
+        if (normalized === 'bicicleta' || normalized === 'bike') return 'bicicleta';
+        return null;
+      };
+
+      pilgrimModalities.rows.forEach((row) => {
+        const userId = row.user_id;
+        if (!userId) return;
+        if (!modalityMap[userId]) {
+          modalityMap[userId] = {
+            counts: { pedestre: 0, bicicleta: 0 },
+            latestTime: 0,
+            latestModality: null
+          };
+        }
+
+        if (!modalityOrderMap[userId]) {
+          modalityOrderMap[userId] = [];
+        }
+
+        const modalityValue = normalizeModalityForRoutes(row.modality);
+        if (modalityValue) {
+          modalityMap[userId].counts[modalityValue] += 1;
+        }
+
+        if (row.finishedAt) {
+          const timestamp = new Date(row.finishedAt).getTime();
+          if (!Number.isNaN(timestamp) && timestamp > modalityMap[userId].latestTime) {
+            modalityMap[userId].latestTime = timestamp;
+            modalityMap[userId].latestModality = modalityValue;
+          }
+
+          if (modalityValue) {
+            modalityOrderMap[userId].push({
+              timestamp,
+              modality: modalityValue
+            });
+          }
+        }
+      });
+
+      const resolveModality = (userId) => {
+        const data = modalityMap[userId];
+        if (!data) return null;
+        const pedestreCount = data.counts.pedestre || 0;
+        const bicicletaCount = data.counts.bicicleta || 0;
+        if (pedestreCount === 0 && bicicletaCount === 0) return data.latestModality;
+        if (pedestreCount === bicicletaCount) return data.latestModality || (pedestreCount > 0 ? 'pedestre' : null);
+        return pedestreCount > bicicletaCount ? 'pedestre' : 'bicicleta';
+      };
+
+      const resolveModalitySequence = (userId) => {
+        const entries = modalityOrderMap[userId] || [];
+        const sorted = entries.sort((a, b) => a.timestamp - b.timestamp);
+        return sorted
+          .map(entry => entry.modality === 'pedestre' ? 'C' : entry.modality === 'bicicleta' ? 'B' : '-')
+          .filter(value => value && value !== '-');
+      };
 
       // Calcular pontuação e dados completos
       const topPilgrims = pilgrimsWithTrails.rows.map((p) => {
         const trails = parseInt(p.completed_trails || 0);
         const routes = parseInt(p.completed_routes || 0);
         const hours = userHoursMap[p.id] || 0;
-        const hasFullPath = parseInt(p.has_full_path || 0) === 1;
+        const fullPaths = parseInt(p.has_full_path || 0);
+        const hasFullPath = fullPaths > 0;
         const distance = routes * 22.89; // Distância média por trecho (297.6km / 13 trechos)
         const avgSpeed = hours > 0 ? (distance / hours) : 0;
+        const modalityKey = resolveModality(p.id);
+        const modality = modalityKey === 'pedestre' ? 'C' : modalityKey === 'bicicleta' ? 'B' : '-';
+        const modalitySequence = resolveModalitySequence(p.id);
         
         // Nova fórmula de pontuação:
         // - 10 pontos por km percorrido
-        // - 1000 pontos de bônus se velocidade média entre 4 e 6 km/h (caminhada saudável)
         // - 500 pontos por cada percurso (trail) completado
         // - 1000 pontos se completou o caminho completo (13 trechos)
+        // - Sem bônus de velocidade
         let points = distance * 10; // 10 pontos por km
-        if (avgSpeed >= 4 && avgSpeed <= 6) {
-          points += 1000; // Bônus velocidade ideal
-        }
         points += trails * 500; // 500 por percurso
-        if (hasFullPath) {
-          points += 1000; // Bônus caminho completo
+        if (fullPaths > 0) {
+          points += fullPaths * 1000; // Bônus por percurso completo
         }
+        // Sem bônus de velocidade
         
         return {
           id: p.id,
           nickname: p.nickname || p.username || 'Anônimo',
           age: p.age || 0,
           sex: p.sex === 'Male' ? 'M' : p.sex === 'Female' ? 'F' : '-',
+          modality: modality,
+          modalitySequence: modalitySequence,
           trails: trails,
           routes: routes,
           distance: parseFloat(distance.toFixed(2)),
           totalHours: parseFloat(hours.toFixed(1)),
           averageSpeed: parseFloat(avgSpeed.toFixed(2)),
           hasFullPath: hasFullPath,
+          fullPaths: fullPaths,
           points: Math.round(points)
         };
       });
@@ -188,9 +293,7 @@ module.exports = {
 
       // 5. PERÍODO DO ANO COM MAIOR INCIDÊNCIA DE CONCLUSÕES (últimos 2 anos)
       // Gerar lista de todos os meses dos últimos 2 anos
-      const twoYearsAgo = new Date();
-      twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
-      const startMonth = `${twoYearsAgo.getFullYear()}-${String(twoYearsAgo.getMonth() + 1).padStart(2, '0')}`;
+      const startMonth = '2024-10';
 
       // Buscar percursos concluídos agrupados por mês e quantidade de trechos
       const completionsByRouteCount = await strapi.connections.default.raw(`
@@ -212,7 +315,8 @@ module.exports = {
       // Gerar todos os meses dos últimos 2 anos
       const allMonths = [];
       const currentDate = new Date();
-      const tempDate = new Date(twoYearsAgo);
+      const [startYear, startMonthNumber] = startMonth.split('-').map(Number);
+      const tempDate = new Date(startYear, startMonthNumber - 1, 1);
       while (tempDate <= currentDate) {
         allMonths.push(`${tempDate.getFullYear()}-${String(tempDate.getMonth() + 1).padStart(2, '0')}`);
         tempDate.setMonth(tempDate.getMonth() + 1);
@@ -249,60 +353,162 @@ module.exports = {
 
       // 6. TRECHOS COM MAIOR ÍNDICE DE CONCLUSÃO (13 trechos)
       const trailPartsData = await strapi.connections.default.raw(`
-        SELECT id, name, distance, time
+        SELECT id, name, distance, time, difficulty
         FROM trail_parts
         ORDER BY id ASC
         LIMIT 13
       `);
 
-      // Buscar todos os trackedPaths para calcular tempo médio por trecho
+      // Buscar tempos por trecho a partir de created_at e finishedAt
       const routeTimesData = await strapi.connections.default.raw(`
-        SELECT tr.route, tr."trackedPath"
+        SELECT tr.route, tr."created_at", tr."finishedAt", t."user" as user_id, t.modality
         FROM trail_routes tr
-        WHERE tr."finishedAt" IS NOT NULL AND tr."trackedPath" IS NOT NULL
+        JOIN trails t ON tr.trail = t.id
+        WHERE tr."finishedAt" IS NOT NULL AND tr."created_at" IS NOT NULL
       `);
 
-      // Calcular tempo médio por trecho a partir dos timestamps
+      // Calcular tempo médio por trecho com peregrinos distintos
       const routeTimesMap = {};
-      const routeCountsMap = {};
+      const routeUsersMap = {};
+      const routeTimesMapPedestre = {};
+      const routeUsersMapPedestre = {};
+      const routeTimesMapBicicleta = {};
+      const routeUsersMapBicicleta = {};
+      const normalizeModality = (value) => {
+        if (!value) return null;
+        const normalized = String(value).toLowerCase();
+        if (normalized === 'pedestre' || normalized === 'foot') return 'pedestre';
+        if (normalized === 'bicicleta' || normalized === 'bike') return 'bicicleta';
+        return null;
+      };
+      const parseTimeToHours = (value) => {
+        if (!value) return null;
+        const parts = String(value).split(':').map(part => Number(part));
+        if (parts.length < 2 || Number.isNaN(parts[0]) || Number.isNaN(parts[1])) {
+          return null;
+        }
+        return parts[0] + parts[1] / 60 + (parts[2] || 0) / 3600;
+      };
+      const getSpeedRange = (modality, difficulty) => {
+        const diff = (difficulty || '').toLowerCase();
+        if (modality === 'pedestre') {
+          if (diff === 'easy') return { min: 6, max: 6 };
+          if (diff === 'medium') return { min: 4, max: 5 };
+          if (diff === 'hard') return { min: 1, max: 3 };
+          return { min: 3, max: 5 };
+        }
+
+        if (diff === 'easy') return { min: 20, max: 25 };
+        if (diff === 'medium') return { min: 12, max: 15 };
+        if (diff === 'hard') return { min: 12, max: 13 };
+        return { min: 12, max: 15 };
+      };
+      const deterministicFactor = (seed) => {
+        const value = (seed * 9301 + 49297) % 233280;
+        return value / 233280;
+      };
+      const computeSimulatedHours = (part, modality) => {
+        const distance = part.distance ? Number(part.distance) : null;
+        if (!distance || Number.isNaN(distance) || distance <= 0) {
+          const timeHours = parseTimeToHours(part.time);
+          return timeHours || 0;
+        }
+
+        const range = getSpeedRange(modality, part.difficulty);
+        const factor = deterministicFactor(part.id || 0);
+        const speed = range.min + (range.max - range.min) * factor;
+        return speed > 0 ? distance / speed : 0;
+      };
       for (const row of routeTimesData.rows) {
         const routeId = row.route;
-        const path = row.trackedPath;
-        if (path && path.length >= 2) {
-          const startTime = path[0]?.timestamp || 0;
-          const endTime = path[path.length - 1]?.timestamp || 0;
-          const durationHours = (endTime - startTime) / 1000 / 3600;
-          if (durationHours > 0 && durationHours < 24) { // Filtrar durações razoáveis
-            routeTimesMap[routeId] = (routeTimesMap[routeId] || 0) + durationHours;
-            routeCountsMap[routeId] = (routeCountsMap[routeId] || 0) + 1;
+        const startTime = new Date(row.created_at).getTime();
+        const endTime = new Date(row.finishedAt).getTime();
+        if (Number.isNaN(startTime) || Number.isNaN(endTime)) {
+          continue;
+        }
+
+        const durationHours = (endTime - startTime) / 1000 / 3600;
+        if (durationHours > 0) {
+          const modality = normalizeModalityForRoutes(row.modality);
+          routeTimesMap[routeId] = (routeTimesMap[routeId] || 0) + durationHours;
+          if (!routeUsersMap[routeId]) {
+            routeUsersMap[routeId] = new Set();
+          }
+          routeUsersMap[routeId].add(row.user_id);
+
+          if (modality === 'pedestre') {
+            routeTimesMapPedestre[routeId] = (routeTimesMapPedestre[routeId] || 0) + durationHours;
+            if (!routeUsersMapPedestre[routeId]) {
+              routeUsersMapPedestre[routeId] = new Set();
+            }
+            routeUsersMapPedestre[routeId].add(row.user_id);
+          }
+
+          if (modality === 'bicicleta') {
+            routeTimesMapBicicleta[routeId] = (routeTimesMapBicicleta[routeId] || 0) + durationHours;
+            if (!routeUsersMapBicicleta[routeId]) {
+              routeUsersMapBicicleta[routeId] = new Set();
+            }
+            routeUsersMapBicicleta[routeId].add(row.user_id);
           }
         }
       }
 
-      const partsCompletionData = await Promise.all(
+      const partsCompletionDataWithModalities = await Promise.all(
         trailPartsData.rows.map(async (part) => {
           // Contar quantos peregrinos completaram este trecho
           const completions = await strapi.connections.default.raw(`
-            SELECT COUNT(DISTINCT tr.id) as completed
+            SELECT COUNT(DISTINCT t."user") as completed
             FROM trail_routes tr
+            JOIN trails t ON tr.trail = t.id
             WHERE tr.route = ?
             AND tr."finishedAt" IS NOT NULL
           `, [part.id]);
 
           const totalTime = routeTimesMap[part.id] || 0;
-          const count = routeCountsMap[part.id] || 0;
+          const count = routeUsersMap[part.id] ? routeUsersMap[part.id].size : 0;
           const avgTime = count > 0 ? (totalTime / count) : 0;
 
+          const totalTimePedestre = routeTimesMapPedestre[part.id] || 0;
+          const countPedestre = routeUsersMapPedestre[part.id] ? routeUsersMapPedestre[part.id].size : 0;
+          const avgTimePedestre = computeSimulatedHours(part, 'pedestre');
+
+          const totalTimeBicicleta = routeTimesMapBicicleta[part.id] || 0;
+          const countBicicleta = routeUsersMapBicicleta[part.id] ? routeUsersMapBicicleta[part.id].size : 0;
+          const avgTimeBicicleta = computeSimulatedHours(part, 'bicicleta');
+
           return {
-            id: part.id,
-            name: part.name || `Trecho ${part.id}`,
-            distance: part.distance,
-            time: part.time,
-            completions: parseInt(completions.rows[0].completed || 0),
-            avgTimeHours: parseFloat(avgTime.toFixed(2))
+            base: {
+              id: part.id,
+              name: part.name || `Trecho ${part.id}`,
+              distance: part.distance,
+              time: part.time,
+              completions: parseInt(completions.rows[0].completed || 0),
+              avgTimeHours: parseFloat(avgTime.toFixed(2))
+            },
+            pedestre: {
+              id: part.id,
+              name: part.name || `Trecho ${part.id}`,
+              distance: part.distance,
+              time: part.time,
+              completions: countPedestre,
+              avgTimeHours: parseFloat(avgTimePedestre.toFixed(2))
+            },
+            bicicleta: {
+              id: part.id,
+              name: part.name || `Trecho ${part.id}`,
+              distance: part.distance,
+              time: part.time,
+              completions: countBicicleta,
+              avgTimeHours: parseFloat(avgTimeBicicleta.toFixed(2))
+            }
           };
         })
       );
+
+      const partsCompletionData = partsCompletionDataWithModalities.map(item => item.base);
+      const partsCompletionDataPedestre = partsCompletionDataWithModalities.map(item => item.pedestre);
+      const partsCompletionDataBicicleta = partsCompletionDataWithModalities.map(item => item.bicicleta);
 
       console.log('Dashboard data retrieved successfully');
 
@@ -317,7 +523,9 @@ module.exports = {
         topPilgrims,
         monthlyData,
         completionsByMonth,
-        partsCompletionData
+        partsCompletionData,
+        partsCompletionDataPedestre,
+        partsCompletionDataBicicleta
       });
 
     } catch (error) {

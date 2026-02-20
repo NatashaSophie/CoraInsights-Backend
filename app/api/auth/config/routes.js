@@ -10,15 +10,6 @@ module.exports = {
         auth: false,
         policies: []
       }
-    },
-    {
-      method: 'GET',
-      path: '/auth/validate',
-      handler: 'auth.validate',
-      config: {
-        auth: false,
-        policies: []
-      }
     }
   ]
 };
