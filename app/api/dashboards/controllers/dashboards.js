@@ -134,28 +134,73 @@ module.exports = {
         FROM trails t
       `);
 
-      // Buscar os tempos de cada peregrino a partir de created_at e finishedAt das trail_routes
+      const normalizeDifficulty = value => {
+        const raw = String(value || '').toLowerCase().trim();
+        if (raw.includes('fac') || raw.includes('easy')) {
+          return 'easy';
+        }
+        if (raw.includes('dif') || raw.includes('hard')) {
+          return 'hard';
+        }
+        if (raw.includes('ext')) {
+          return 'extreme';
+        }
+        return 'medium';
+      };
+
+      const getSpeedRangeForTrecho = (modality, difficulty) => {
+        const normalized = normalizeDifficulty(difficulty);
+        const mode = String(modality || '').toLowerCase();
+        const isBike = mode === 'bicicleta' || mode === 'bike' || mode === 'pedal';
+
+        if (isBike) {
+          if (normalized === 'easy') return [20, 25];
+          if (normalized === 'hard' || normalized === 'extreme') return [12, 13];
+          return [12, 15];
+        }
+
+        if (normalized === 'easy') return [6, 6];
+        if (normalized === 'hard') return [1, 3];
+        if (normalized === 'extreme') return [1, 2];
+        return [4, 5];
+      };
+
+      const getExpectedHours = (distance, modality, difficulty) => {
+        const dist = Number(distance || 0);
+        if (!dist) {
+          return 0;
+        }
+        const [minSpeed, maxSpeed] = getSpeedRangeForTrecho(modality, difficulty);
+        const avgSpeed = (minSpeed + maxSpeed) / 2;
+        return avgSpeed > 0 ? dist / avgSpeed : 0;
+      };
+
+      // Calcular tempo estimado por peregrino a partir de distancia/dificuldade/modalidade
       const pilgrimTimes = await strapi.connections.default.raw(`
         SELECT 
           t."user" as user_id,
           tr.trail as trail_id,
-          tr."created_at" as created_at,
-          tr."finishedAt" as finished_at
+          tp.distance as distance,
+          tp.difficulty as difficulty,
+          t.modality as modality
         FROM trail_routes tr
         JOIN trails t ON tr.trail = t.id
-        WHERE tr."finishedAt" IS NOT NULL AND tr."created_at" IS NOT NULL
+        JOIN trail_parts tp ON tp.id = tr.route
+        WHERE tr."finishedAt" IS NOT NULL
       `);
 
-      // Calcular tempo total por usuário a partir dos timestamps do created_at e finishedAt
+      // Calcular tempo total por usuário com base em distancia/dificuldade/modalidade
       const userHoursMap = {};
+      const userDistanceMap = {};
       for (const row of pilgrimTimes.rows) {
         const userId = row.user_id;
-        const startTime = new Date(row.created_at).getTime();
-        const endTime = new Date(row.finished_at).getTime();
-        if (Number.isNaN(startTime) || Number.isNaN(endTime)) continue;
-        const durationHours = (endTime - startTime) / 1000 / 3600;
+        const durationHours = getExpectedHours(row.distance, row.modality, row.difficulty);
         if (durationHours > 0) {
           userHoursMap[userId] = (userHoursMap[userId] || 0) + durationHours;
+        }
+        const distance = Number(row.distance || 0);
+        if (distance > 0) {
+          userDistanceMap[userId] = (userDistanceMap[userId] || 0) + distance;
         }
       }
 
@@ -231,7 +276,7 @@ module.exports = {
         const hours = userHoursMap[p.id] || 0;
         const fullPaths = parseInt(p.has_full_path || 0);
         const hasFullPath = fullPaths > 0;
-        const distance = routes * 22.89; // Distância média por trecho (297.6km / 13 trechos)
+        const distance = userDistanceMap[p.id] || routes * 22.89;
         const avgSpeed = hours > 0 ? (distance / hours) : 0;
         const modalityKey = resolveModality(p.id);
         const modality = modalityKey === 'pedestre' ? 'C' : modalityKey === 'bicicleta' ? 'B' : '-';

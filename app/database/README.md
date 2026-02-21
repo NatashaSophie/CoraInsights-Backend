@@ -72,6 +72,11 @@ psql -h localhost -p 5432 -U postgres -d postgres < backups/postgres-backup-2026
 psql -h localhost -p 5432 -U postgres -d postgres -c "\COPY nome_tabela FROM 'csv-exports/nome_tabela.csv' WITH CSV HEADER"
 ```
 
+### Importar CSV Individual (UTF-8 recomendado):
+```bash
+PGCLIENTENCODING=UTF8 psql -h localhost -p 5432 -U postgres -d postgres -c "\COPY nome_tabela FROM 'csv-exports/nome_tabela.csv' WITH (FORMAT csv, HEADER true, ENCODING 'UTF8')"
+```
+
 ## 📝 Notas
 
 - **Data do último backup**: 07/02/2026 21:25
@@ -108,5 +113,6 @@ psql -h localhost -p 5432 -U postgres -d postgres -c "\COPY nome_tabela FROM 'cs
 
 - Os backups são criados automaticamente com a data no nome do arquivo
 - Mantenha backups regulares antes de modificações importantes
+- Garanta que os CSVs estejam salvos em UTF-8 para evitar problemas de acentuacao
 - Os CSVs podem ser abertos em Excel/LibreOffice para análise
 - Sempre teste restaurações em um ambiente de teste primeiro
