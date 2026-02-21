@@ -268,6 +268,16 @@ const getPilgrimAnalytics = async ctx => {
       return [4, 5];
     };
 
+    const getExpectedHours = (distance, modality, difficulty) => {
+      const dist = Number(distance || 0);
+      if (!dist) {
+        return 0;
+      }
+      const [minSpeed, maxSpeed] = getSpeedRange(modality, difficulty);
+      const avgSpeed = (minSpeed + maxSpeed) / 2;
+      return avgSpeed > 0 ? dist / avgSpeed : 0;
+    };
+
     routeTimesResult.rows.forEach(row => {
       if (!routePartsMap.has(row.id)) {
         routePartsMap.set(row.id, {
@@ -311,6 +321,52 @@ const getPilgrimAnalytics = async ctx => {
     });
 
     const average = list => (list.length ? list.reduce((sum, value) => sum + value, 0) / list.length : 0);
+
+    const routeHistoryResult = await strapi.connections.default.raw(`
+        SELECT
+          tr.id as trail_route_id,
+          tr.route as route_id,
+          tp.name as route_name,
+          tp.distance,
+          tp.difficulty,
+          t.modality,
+          t."inversePaths" as inverse_paths,
+          tr.created_at,
+          tr."finishedAt"
+        FROM trail_routes tr
+        JOIN trails t ON tr.trail = t.id
+        LEFT JOIN trail_parts tp ON tp.id = tr.route
+        WHERE t."user" = ${userIdValue}
+        ORDER BY tr.created_at ASC
+      `);
+
+    const routeHistory = routeHistoryResult.rows.map(row => {
+      const startTime = row.created_at ? new Date(row.created_at) : null;
+      const endTime = row.finishedAt ? new Date(row.finishedAt) : null;
+      const durationHours = (startTime && endTime && endTime > startTime)
+        ? (endTime.getTime() - startTime.getTime()) / 1000 / 3600
+        : 0;
+      const expectedHours = getExpectedHours(row.distance, row.modality, row.difficulty);
+      const hoursSpent = expectedHours > 0 ? expectedHours : durationHours;
+      const distance = Number(row.distance || 0);
+      const avgSpeed = hoursSpent > 0 && distance > 0 ? (distance / hoursSpent) : 0;
+      const isInverse = row.inverse_paths === true || row.inverse_paths === 'true' || row.inverse_paths === 1;
+      const status = row.finishedAt ? 'concluido' : 'andamento';
+
+      return {
+        id: row.trail_route_id,
+        routeId: row.route_id,
+        name: row.route_name,
+        modality: row.modality || null,
+        direction: isInverse,
+        startAt: row.created_at || null,
+        finishedAt: row.finishedAt || null,
+        status,
+        distance,
+        hoursSpent,
+        avgSpeed
+      };
+    });
 
     const timePerRoute = Array.from(routePartsMap.values())
       .sort((a, b) => a.id - b.id)
@@ -518,6 +574,18 @@ const getPilgrimAnalytics = async ctx => {
         name: r.name,
         avgWalkHours: r.avgWalkHours ? parseFloat(r.avgWalkHours.toFixed(2)) : 0,
         avgBikeHours: r.avgBikeHours ? parseFloat(r.avgBikeHours.toFixed(2)) : 0,
+      })),
+      routeHistory: (routeHistory || []).map(row => ({
+        id: row.id,
+        routeId: row.routeId,
+        name: row.name,
+        modality: row.modality,
+        startAt: row.startAt,
+        finishedAt: row.finishedAt,
+        status: row.status,
+        distance: row.distance ? parseFloat(row.distance.toFixed(2)) : 0,
+        hoursSpent: row.hoursSpent ? parseFloat(row.hoursSpent.toFixed(2)) : 0,
+        avgSpeed: row.avgSpeed ? parseFloat(row.avgSpeed.toFixed(2)) : 0,
       })),
       recentActivity: recentActivity.rows.map(r => ({
         date: r.date,
