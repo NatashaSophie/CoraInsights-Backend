@@ -1560,6 +1560,9 @@
                 "isActive": {
                   "type": "boolean"
                 },
+                "rejectionReason": {
+                  "type": "string"
+                },
                 "created_by": {
                   "type": "string"
                 },

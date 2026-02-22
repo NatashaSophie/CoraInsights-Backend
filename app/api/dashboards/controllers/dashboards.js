@@ -59,40 +59,65 @@ module.exports = {
 
       // Caminho Completo - peregrinos que completaram todos os 13 trechos
       const fullPathPilgrims = await strapi.connections.default.raw(`
-        SELECT COUNT(DISTINCT t.id) as count
-        FROM trails t
-        WHERE t."finishedAt" IS NOT NULL
-        AND (
-          SELECT COUNT(DISTINCT tr.route)
+        WITH parts AS (
+          SELECT ARRAY_AGG(id ORDER BY id) AS route_ids,
+                 ARRAY_AGG(id ORDER BY id DESC) AS route_ids_reverse,
+                 COUNT(*) AS total
+          FROM trail_parts
+        ), completed AS (
+          SELECT tr.trail,
+                 t."inversePaths" as inverse_paths,
+                 ARRAY_AGG(tr.route ORDER BY tr.created_at) AS route_ids,
+                 COUNT(*) AS total
           FROM trail_routes tr
-          WHERE tr.trail = t.id AND tr."finishedAt" IS NOT NULL
-        ) = 13
+          JOIN trails t ON tr.trail = t.id
+          WHERE tr."finishedAt" IS NOT NULL
+            AND t."finishedAt" IS NOT NULL
+          GROUP BY tr.trail, t."inversePaths"
+        )
+        SELECT COUNT(*) AS count
+        FROM completed, parts
+        WHERE completed.total = parts.total
+          AND (
+            (COALESCE(completed.inverse_paths, false) = false AND completed.route_ids = parts.route_ids)
+            OR
+            (COALESCE(completed.inverse_paths, false) = true AND completed.route_ids = parts.route_ids_reverse)
+          )
       `);
-      const caminhoCompleto = parseInt(fullPathPilgrims.rows[0]?.count || 0);
+      const caminhoCompleto = parseInt(fullPathPilgrims.rows[0]?.count || 0, 10);
 
       // 2. STATUS DO CAMINHO - Distribuição por quantidade de trechos completados
       const statusCaminhoQuery = await strapi.connections.default.raw(`
-        WITH trail_route_counts AS (
+        WITH parts AS (
+          SELECT ARRAY_AGG(id ORDER BY id) AS route_ids,
+                 ARRAY_AGG(id ORDER BY id DESC) AS route_ids_reverse,
+                 COUNT(*) AS total
+          FROM trail_parts
+        ), trail_route_counts AS (
           SELECT 
             t.id as trail_id,
+            t."inversePaths" as inverse_paths,
             CASE WHEN t."finishedAt" IS NULL THEN 0 ELSE 1 END as is_finished,
-            CASE WHEN t."finishedAt" IS NULL THEN 0 ELSE COUNT(DISTINCT tr.route) END as routes_completed
+            ARRAY_AGG(tr.route ORDER BY tr.created_at) as route_ids,
+            COUNT(tr.route) as routes_completed
           FROM trails t
           LEFT JOIN trail_routes tr ON tr.trail = t.id AND tr."finishedAt" IS NOT NULL
-          GROUP BY t.id, t."finishedAt"
+          GROUP BY t.id, t."finishedAt", t."inversePaths"
         )
         SELECT 
           CASE 
             WHEN is_finished = 0 THEN 'Em Andamento'
-            WHEN routes_completed = 13 THEN 'Caminho Completo (13 trechos)'
+            WHEN routes_completed = parts.total AND (
+              (COALESCE(inverse_paths, false) = false AND trail_route_counts.route_ids = parts.route_ids)
+              OR
+              (COALESCE(inverse_paths, false) = true AND trail_route_counts.route_ids = parts.route_ids_reverse)
+            ) THEN 'Caminho Completo (13 trechos)'
             ELSE routes_completed || ' ' || CASE WHEN routes_completed = 1 THEN 'trecho' ELSE 'trechos' END
           END as status,
-          routes_completed,
-          is_finished,
           COUNT(*) as count
-        FROM trail_route_counts
-        GROUP BY status, routes_completed, is_finished
-        ORDER BY is_finished DESC, routes_completed ASC
+        FROM trail_route_counts, parts
+        GROUP BY status
+        ORDER BY status ASC
       `);
       
       const statusCaminho = statusCaminhoQuery.rows.map(row => ({

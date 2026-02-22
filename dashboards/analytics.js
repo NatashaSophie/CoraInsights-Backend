@@ -639,6 +639,24 @@ const getManagerAnalytics = async ctx => {
       `
     );
 
+    const pilgrimStatsResult = await strapi.connections.default.raw(`
+        SELECT
+          COUNT(*) as total,
+          COUNT(CASE WHEN LOWER(sex) IN ('male', 'masculino') THEN 1 END) as male,
+          COUNT(CASE WHEN LOWER(sex) IN ('female', 'feminino') THEN 1 END) as female,
+          COUNT(CASE WHEN birthdate IS NOT NULL
+            AND DATE_PART('year', AGE(birthdate)) < 30 THEN 1 END) as age_under_30,
+          COUNT(CASE WHEN birthdate IS NOT NULL
+            AND DATE_PART('year', AGE(birthdate)) BETWEEN 30 AND 44 THEN 1 END) as age_30_44,
+          COUNT(CASE WHEN birthdate IS NOT NULL
+            AND DATE_PART('year', AGE(birthdate)) BETWEEN 45 AND 59 THEN 1 END) as age_45_59,
+          COUNT(CASE WHEN birthdate IS NOT NULL
+            AND DATE_PART('year', AGE(birthdate)) >= 60 THEN 1 END) as age_60_plus
+        FROM "users-permissions_user"
+        WHERE blocked = false
+        AND LOWER("userType") = 'pilgrim'
+      `);
+
     const trailStats = await strapi.connections.default.raw(
       `
         SELECT 
@@ -649,7 +667,31 @@ const getManagerAnalytics = async ctx => {
       `
     );
 
+    const directionStatsResult = await strapi.connections.default.raw(`
+        SELECT
+          COUNT(CASE WHEN "inversePaths" = true THEN 1 END) as inverse_count,
+          COUNT(CASE WHEN "inversePaths" IS NULL OR "inversePaths" = false THEN 1 END) as direct_count
+        FROM trails
+      `);
+
+    const modalityStatsResult = await strapi.connections.default.raw(`
+        SELECT
+          COUNT(CASE WHEN LOWER(modality) IN ('pedestre', 'foot') THEN 1 END) as foot_count,
+          COUNT(CASE WHEN LOWER(modality) IN ('bicicleta', 'bike', 'pedal') THEN 1 END) as bike_count
+        FROM trails
+      `);
+
     const trails = trailStats.rows[0];
+    const directionStatsRow = directionStatsResult.rows[0] || {};
+    const directionStats = {
+      direct: parseInt(directionStatsRow.direct_count || 0, 10),
+      inverse: parseInt(directionStatsRow.inverse_count || 0, 10)
+    };
+    const modalityStatsRow = modalityStatsResult.rows[0] || {};
+    const modalityStats = {
+      foot: parseInt(modalityStatsRow.foot_count || 0, 10),
+      bike: parseInt(modalityStatsRow.bike_count || 0, 10)
+    };
 
     const activity = await strapi.connections.default.raw(`
         SELECT 
@@ -662,17 +704,358 @@ const getManagerAnalytics = async ctx => {
         ORDER BY date ASC
       `);
 
+    const trailPartsResult = await strapi.connections.default.raw(`
+        SELECT
+          tp.id as part_id,
+          tp.name as part_name,
+          cp_from.id as from_checkpoint_id,
+          loc_from.x as from_checkpoint_x,
+          loc_from.y as from_checkpoint_y,
+          cp_to.id as to_checkpoint_id,
+          loc_to.x as to_checkpoint_x,
+          loc_to.y as to_checkpoint_y
+        FROM trail_parts tp
+        LEFT JOIN checkpoints cp_from ON tp."fromCheckpoint" = cp_from.id
+        LEFT JOIN checkpoints_components cc_from
+          ON cp_from.id = cc_from.checkpoint_id
+          AND cc_from.component_type = 'components_general_locations'
+        LEFT JOIN components_general_locations loc_from ON cc_from.component_id = loc_from.id
+        LEFT JOIN checkpoints cp_to ON tp."toCheckpoint" = cp_to.id
+        LEFT JOIN checkpoints_components cc_to
+          ON cp_to.id = cc_to.checkpoint_id
+          AND cc_to.component_type = 'components_general_locations'
+        LEFT JOIN components_general_locations loc_to ON cc_to.component_id = loc_to.id
+        ORDER BY tp.id ASC
+      `);
+
+    const checkpointsResult = await strapi.connections.default.raw(`
+        SELECT
+          cp.id as checkpoint_id,
+          cp.name as checkpoint_name,
+          loc.x as checkpoint_x,
+          loc.y as checkpoint_y
+        FROM checkpoints cp
+        LEFT JOIN checkpoints_components cc
+          ON cp.id = cc.checkpoint_id
+          AND cc.component_type = 'components_general_locations'
+        LEFT JOIN components_general_locations loc ON cc.component_id = loc.id
+        ORDER BY cp.id ASC
+      `);
+
+    const utmToLatLon = (x, y) => {
+      const xRef = 734787;
+      const yRef = 8238207;
+      const latRef = -15.9255;
+      const lonRef = -48.8104;
+      const metrosPorGrauLat = 111320;
+      const metrosPorGrauLon = 107550;
+      const deltaX = x - xRef;
+      const deltaY = y - yRef;
+      return {
+        lat: latRef + (deltaY / metrosPorGrauLat),
+        lon: lonRef + (deltaX / metrosPorGrauLon)
+      };
+    };
+
+    const trailParts = trailPartsResult.rows.map(row => ({
+      id: row.part_id,
+      name: row.part_name || `Trecho ${row.part_id}`,
+      fromCheckpointId: row.from_checkpoint_id,
+      toCheckpointId: row.to_checkpoint_id,
+      from: {
+        id: row.from_checkpoint_id,
+        x: row.from_checkpoint_x,
+        y: row.from_checkpoint_y
+      },
+      to: {
+        id: row.to_checkpoint_id,
+        x: row.to_checkpoint_x,
+        y: row.to_checkpoint_y
+      }
+    }));
+
+    const checkpoints = checkpointsResult.rows
+      .filter(row => Number.isFinite(row.checkpoint_x) && Number.isFinite(row.checkpoint_y))
+      .map(row => {
+        const coords = utmToLatLon(row.checkpoint_x, row.checkpoint_y);
+        return {
+          id: row.checkpoint_id,
+          name: row.checkpoint_name,
+          x: row.checkpoint_x,
+          y: row.checkpoint_y,
+          lat: coords.lat,
+          lon: coords.lon
+        };
+      });
+
+    const establishmentsResult = await strapi.connections.default.raw(`
+        SELECT
+          e.id,
+          e.name,
+          e.address,
+          e.email,
+          e.phone,
+          e.category,
+          e.description,
+          e."openingHours" as opening_hours,
+          e.services,
+          e."isActive" as is_active,
+          e."rejectionReason" as rejection_reason,
+          e.owner as owner_id,
+          u.username as owner_name,
+          u.email as owner_email,
+          e.created_at,
+          loc.x as location_x,
+          loc.y as location_y
+        FROM establishments e
+        LEFT JOIN "users-permissions_user" u ON e.owner = u.id
+        LEFT JOIN establishments_components ec
+          ON e.id = ec.establishment_id
+          AND ec.component_type = 'components_general_locations'
+        LEFT JOIN components_general_locations loc
+          ON ec.component_id = loc.id
+        ORDER BY e.id ASC
+      `);
+
+    const merchantsResult = await strapi.connections.default.raw(`
+        SELECT id, username, email
+        FROM "users-permissions_user"
+        WHERE blocked = false
+        AND LOWER("userType") = 'merchant'
+        ORDER BY username ASC
+      `);
+
+    const distanceSquared = (ax, ay, bx, by) => {
+      if (!Number.isFinite(ax) || !Number.isFinite(ay) || !Number.isFinite(bx) || !Number.isFinite(by)) {
+        return Number.POSITIVE_INFINITY;
+      }
+      const dx = ax - bx;
+      const dy = ay - by;
+      return dx * dx + dy * dy;
+    };
+
+    const establishments = establishmentsResult.rows.map(row => {
+      const location = Number.isFinite(row.location_x) && Number.isFinite(row.location_y)
+        ? { x: row.location_x, y: row.location_y }
+        : null;
+      let coords = null;
+      if (location) {
+        coords = utmToLatLon(location.x, location.y);
+      }
+
+      let closestPart = null;
+      let closestDistance = Number.POSITIVE_INFINITY;
+      if (location) {
+        trailParts.forEach(part => {
+          const fromDistance = distanceSquared(location.x, location.y, part.from.x, part.from.y);
+          const toDistance = distanceSquared(location.x, location.y, part.to.x, part.to.y);
+          const candidateDistance = Math.min(fromDistance, toDistance);
+          if (candidateDistance < closestDistance) {
+            closestDistance = candidateDistance;
+            closestPart = part;
+          }
+        });
+      }
+
+      return {
+        id: row.id,
+        name: row.name,
+        address: row.address,
+        email: row.email,
+        phone: row.phone,
+        category: row.category,
+        description: row.description,
+        openingHours: row.opening_hours,
+        services: row.services,
+        isActive: row.is_active,
+        rejectionReason: row.rejection_reason,
+        createdAt: row.created_at,
+        ownerId: row.owner_id,
+        ownerName: row.owner_name,
+        ownerEmail: row.owner_email,
+        location,
+        lat: coords ? coords.lat : null,
+        lon: coords ? coords.lon : null,
+        trailPartId: closestPart ? closestPart.id : null,
+        trailPartName: closestPart ? closestPart.name : null
+      };
+    });
+
+    const segmentsWithEstablishments = Array.from(
+      new Set(establishments.map(item => item.trailPartId).filter(Boolean))
+    );
+
+    const segmentCompletionResult = await strapi.connections.default.raw(`
+        SELECT
+          tp.id as part_id,
+          tp.name as part_name,
+          t.modality as modality,
+          COUNT(*) as total
+        FROM trail_parts tp
+        LEFT JOIN trail_routes tr ON tr.route = tp.id
+          AND tr."finishedAt" IS NOT NULL
+        LEFT JOIN trails t ON tr.trail = t.id
+        GROUP BY tp.id, tp.name, t.modality
+        ORDER BY tp.id ASC
+      `);
+
+    const normalizeTrailModality = value => {
+      const raw = String(value || '').toLowerCase().trim();
+      if (raw === 'bicicleta' || raw === 'bike' || raw === 'pedal') {
+        return 'bike';
+      }
+      if (raw === 'pedestre' || raw === 'foot' || raw === 'pe') {
+        return 'foot';
+      }
+      return null;
+    };
+
+    const segmentMap = new Map();
+    trailParts.forEach(part => {
+      segmentMap.set(part.id, {
+        id: part.id,
+        name: part.name,
+        foot: 0,
+        bike: 0,
+        total: 0
+      });
+    });
+
+    segmentCompletionResult.rows.forEach(row => {
+      const entry = segmentMap.get(row.part_id) || {
+        id: row.part_id,
+        name: row.part_name || `Trecho ${row.part_id}`,
+        foot: 0,
+        bike: 0,
+        total: 0
+      };
+      const modality = normalizeTrailModality(row.modality);
+      const count = parseInt(row.total, 10) || 0;
+      if (modality === 'foot') {
+        entry.foot += count;
+      } else if (modality === 'bike') {
+        entry.bike += count;
+      }
+      segmentMap.set(entry.id, entry);
+    });
+
+    const segmentCompletions = Array.from(segmentMap.values())
+      .sort((a, b) => a.id - b.id)
+      .map(entry => ({
+        ...entry,
+        total: entry.foot + entry.bike
+      }));
+
+    const registrationResult = await strapi.connections.default.raw(`
+        SELECT
+          EXTRACT(YEAR FROM created_at)::int as year,
+          EXTRACT(MONTH FROM created_at)::int as month,
+          COUNT(*) as total
+        FROM "users-permissions_user"
+        WHERE blocked = false
+        AND LOWER("userType") = 'pilgrim'
+        GROUP BY EXTRACT(YEAR FROM created_at), EXTRACT(MONTH FROM created_at)
+        ORDER BY year ASC, month ASC
+      `);
+
+    const monthlyRegistrations = {};
+    registrationResult.rows.forEach(row => {
+      const year = String(row.year);
+      if (!monthlyRegistrations[year]) {
+        monthlyRegistrations[year] = Array.from({ length: 12 }, () => 0);
+      }
+      const monthIndex = Math.max(0, Math.min(11, Number(row.month) - 1));
+      monthlyRegistrations[year][monthIndex] = parseInt(row.total, 10) || 0;
+    });
+
+    const activeRoutesResult = await strapi.connections.default.raw(`
+        SELECT COUNT(*) as total
+        FROM trail_routes
+        WHERE "finishedAt" IS NULL
+      `);
+
+    const completedRoutesByTrail = await strapi.connections.default.raw(`
+        SELECT tr.trail, tr.route, tr.created_at, t."inversePaths" as inverse_paths
+        FROM trail_routes tr
+        JOIN trails t ON tr.trail = t.id
+        WHERE tr."finishedAt" IS NOT NULL
+        ORDER BY tr.trail ASC, tr.created_at ASC
+      `);
+
+    const expectedRouteOrder = trailParts.map(part => part.id);
+    const expectedReverseOrder = [...expectedRouteOrder].reverse();
+    const routesByTrail = new Map();
+    completedRoutesByTrail.rows.forEach(row => {
+      if (!routesByTrail.has(row.trail)) {
+        routesByTrail.set(row.trail, {
+          routes: [],
+          inverse: row.inverse_paths === true
+        });
+      }
+      const entry = routesByTrail.get(row.trail);
+      entry.routes.push(Number(row.route));
+    });
+
+    const fullPathCompletions = Array.from(routesByTrail.values()).filter(entry => {
+      if (entry.routes.length !== expectedRouteOrder.length) {
+        return false;
+      }
+      const expected = entry.inverse ? expectedReverseOrder : expectedRouteOrder;
+      return expected.every((routeId, index) => entry.routes[index] === routeId);
+    }).length;
+
+    const totalCompletedRoutes = parseInt(trails.published || 0, 10);
+    const completionRate = totalCompletedRoutes > 0
+      ? Math.round((fullPathCompletions / totalCompletedRoutes) * 100)
+      : 0;
+    const activeRoutes = parseInt(activeRoutesResult.rows[0]?.total || 0, 10);
+
+    const totalPilgrims = userStats.rows.reduce((sum, row) => {
+      const isPilgrim = String(row.userType || '').toLowerCase() === 'pilgrim';
+      return isPilgrim ? sum + parseInt(row.count, 10) : sum;
+    }, 0);
+
+    const pilgrimStatsRow = pilgrimStatsResult.rows[0] || {};
+    const pilgrimStats = {
+      total: parseInt(pilgrimStatsRow.total || 0, 10),
+      male: parseInt(pilgrimStatsRow.male || 0, 10),
+      female: parseInt(pilgrimStatsRow.female || 0, 10),
+      ageUnder30: parseInt(pilgrimStatsRow.age_under_30 || 0, 10),
+      age30To44: parseInt(pilgrimStatsRow.age_30_44 || 0, 10),
+      age45To59: parseInt(pilgrimStatsRow.age_45_59 || 0, 10),
+      age60Plus: parseInt(pilgrimStatsRow.age_60_plus || 0, 10)
+    };
+
     ctx.send({
       users: userStats.rows || [],
+      totalPilgrims,
+      pilgrimStats,
       trails: {
         total: parseInt(trails.total, 10),
         published: parseInt(trails.published, 10),
         draft: parseInt(trails.draft, 10),
       },
+      directionStats,
+      modalityStats,
       activity: activity.rows.map(r => ({
         date: r.date,
         completions: parseInt(r.completions, 10),
       })),
+      trailParts,
+      checkpoints,
+      establishments,
+      merchants: merchantsResult.rows || [],
+      segmentsWithEstablishments,
+      segmentCompletions,
+      monthlyRegistrations,
+      completionStats: {
+        fullPathCompletions,
+        totalCompletedRoutes,
+        percentage: completionRate
+      },
+      activeRoutes: {
+        count: activeRoutes
+      }
     });
   } catch (error) {
     ctx.send({ error: error.message }, 500);
@@ -707,6 +1090,7 @@ const getMerchantAnalytics = async ctx => {
           e."openingHours" as opening_hours,
           e.services,
           e."isActive" as is_active,
+          e."rejectionReason" as rejection_reason,
           e.created_at,
           loc.x as location_x,
           loc.y as location_y
@@ -847,6 +1231,7 @@ const getMerchantAnalytics = async ctx => {
         openingHours: row.opening_hours,
         services: row.services,
         isActive: row.is_active,
+        rejectionReason: row.rejection_reason,
         createdAt: row.created_at,
         location,
         lat: coords ? coords.lat : null,

@@ -60,6 +60,10 @@
     "isActive": {
       "type": "boolean",
       "default": true
+    },
+    "rejectionReason": {
+      "type": "text",
+      "required": false
     }
   }
 }
