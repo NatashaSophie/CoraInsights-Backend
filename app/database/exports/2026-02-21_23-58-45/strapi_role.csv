@@ -1,0 +1,4 @@
+id,name,code,description,created_at,updated_at
+4,Super Admin,strapi-super-admin,Super Admins can access and manage all features and settings.,2026-02-07 15:02:00.394-03,2026-02-07 15:02:00.394-03
+5,Editor,strapi-editor,Editors can manage and publish contents including those of other users.,2026-02-07 15:02:00.404-03,2026-02-07 15:02:00.404-03
+6,Author,strapi-author,Authors can manage the content they have created.,2026-02-07 15:02:00.41-03,2026-02-07 15:02:00.41-03

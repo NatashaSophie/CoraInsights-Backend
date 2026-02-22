@@ -1,0 +1,3 @@
+id,name,description,type,created_by,updated_by
+2,Public,Default role given to unauthenticated user.,public,1,1
+1,Authenticated,Default role given to authenticated user.,authenticated,1,1

@@ -1,0 +1,2 @@
+id,firstname,lastname,username,email,password,resetPasswordToken,registrationToken,isActive,blocked,preferedLanguage
+1,Natasha Sophie,Pereira,,natasha.sophie@gmail.com,$2a$10$0Zn2yHqyF99QZUn/ksCQ.OuhzTstCLJCGlb2Ey9rXYBNjUxWDcaoy,,,t,,

@@ -1,0 +1,146 @@
+id,action,subject,properties,conditions,role,created_at,updated_at
+4260,plugins::content-manager.explorer.create,application::auth.auth,"{""fields"": [""email"", ""token""]}",[],5,2026-02-07 15:02:00.422-03,2026-02-07 15:02:00.436-03
+4263,plugins::content-manager.explorer.create,application::trail-parts.trail-parts,"{""fields"": [""name"", ""difficulty"", ""time"", ""distance"", ""coverImage"", ""images"", ""description"", ""slug"", ""fromCheckpoint"", ""toCheckpoint""]}",[],5,2026-02-07 15:02:00.425-03,2026-02-07 15:02:00.436-03
+4261,plugins::content-manager.explorer.create,application::certificate.certificate,"{""fields"": [""code"", ""trail"", ""file""]}",[],5,2026-02-07 15:02:00.425-03,2026-02-07 15:02:00.436-03
+4262,plugins::content-manager.explorer.create,application::checkpoints.checkpoints,"{""fields"": [""name"", ""location.x"", ""location.y"", ""estabelecimentos""]}",[],5,2026-02-07 15:02:00.425-03,2026-02-07 15:02:00.436-03
+4265,plugins::content-manager.explorer.create,application::trails.trails,"{""fields"": [""user"", ""inversePaths"", ""modality"", ""finishedAt"", ""startedAt"", ""routes"", ""certificate""]}",[],5,2026-02-07 15:02:00.425-03,2026-02-07 15:02:00.437-03
+4264,plugins::content-manager.explorer.create,application::trail-route.trail-route,"{""fields"": [""trail"", ""finishedAt"", ""trackedPath"", ""route"", ""mapUrl""]}",[],5,2026-02-07 15:02:00.425-03,2026-02-07 15:02:00.437-03
+4266,plugins::content-manager.explorer.create,application::establishment.establishment,"{""fields"": [""name"", ""address"", ""email"", ""phone"", ""category"", ""location.x"", ""location.y"", ""owner"", ""description"", ""openingHours"", ""images"", ""services"", ""isActive""]}",[],5,2026-02-07 15:02:00.426-03,2026-02-07 15:02:00.437-03
+4267,plugins::content-manager.explorer.read,application::certificate.certificate,"{""fields"": [""code"", ""trail"", ""file""]}",[],5,2026-02-07 15:02:00.426-03,2026-02-07 15:02:00.44-03
+4268,plugins::content-manager.explorer.read,application::auth.auth,"{""fields"": [""email"", ""token""]}",[],5,2026-02-07 15:02:00.426-03,2026-02-07 15:02:00.44-03
+4269,plugins::content-manager.explorer.read,application::checkpoints.checkpoints,"{""fields"": [""name"", ""location.x"", ""location.y"", ""estabelecimentos""]}",[],5,2026-02-07 15:02:00.426-03,2026-02-07 15:02:00.44-03
+4270,plugins::content-manager.explorer.read,application::establishment.establishment,"{""fields"": [""name"", ""address"", ""email"", ""phone"", ""category"", ""location.x"", ""location.y"", ""owner"", ""description"", ""openingHours"", ""images"", ""services"", ""isActive""]}",[],5,2026-02-07 15:02:00.456-03,2026-02-07 15:02:00.466-03
+4272,plugins::content-manager.explorer.read,application::trails.trails,"{""fields"": [""user"", ""inversePaths"", ""modality"", ""finishedAt"", ""startedAt"", ""routes"", ""certificate""]}",[],5,2026-02-07 15:02:00.456-03,2026-02-07 15:02:00.469-03
+4271,plugins::content-manager.explorer.read,application::trail-parts.trail-parts,"{""fields"": [""name"", ""difficulty"", ""time"", ""distance"", ""coverImage"", ""images"", ""description"", ""slug"", ""fromCheckpoint"", ""toCheckpoint""]}",[],5,2026-02-07 15:02:00.456-03,2026-02-07 15:02:00.469-03
+4273,plugins::content-manager.explorer.read,application::trail-route.trail-route,"{""fields"": [""trail"", ""finishedAt"", ""trackedPath"", ""route"", ""mapUrl""]}",[],5,2026-02-07 15:02:00.458-03,2026-02-07 15:02:00.469-03
+4274,plugins::content-manager.explorer.update,application::certificate.certificate,"{""fields"": [""code"", ""trail"", ""file""]}",[],5,2026-02-07 15:02:00.458-03,2026-02-07 15:02:00.469-03
+4279,plugins::content-manager.explorer.update,application::trail-parts.trail-parts,"{""fields"": [""name"", ""difficulty"", ""time"", ""distance"", ""coverImage"", ""images"", ""description"", ""slug"", ""fromCheckpoint"", ""toCheckpoint""]}",[],5,2026-02-07 15:02:00.461-03,2026-02-07 15:02:00.472-03
+4280,plugins::content-manager.explorer.update,application::trails.trails,"{""fields"": [""user"", ""inversePaths"", ""modality"", ""finishedAt"", ""startedAt"", ""routes"", ""certificate""]}",[],5,2026-02-07 15:02:00.488-03,2026-02-07 15:02:00.502-03
+4281,plugins::content-manager.explorer.delete,application::auth.auth,{},[],5,2026-02-07 15:02:00.488-03,2026-02-07 15:02:00.502-03
+4283,plugins::content-manager.explorer.delete,application::checkpoints.checkpoints,{},[],5,2026-02-07 15:02:00.488-03,2026-02-07 15:02:00.502-03
+4284,plugins::content-manager.explorer.delete,application::establishment.establishment,{},[],5,2026-02-07 15:02:00.488-03,2026-02-07 15:02:00.502-03
+4285,plugins::upload.read,,{},[],5,2026-02-07 15:02:00.488-03,2026-02-07 15:02:00.502-03
+4286,plugins::content-manager.explorer.delete,application::trail-parts.trail-parts,{},[],5,2026-02-07 15:02:00.491-03,2026-02-07 15:02:00.505-03
+4292,plugins::upload.assets.download,,{},[],5,2026-02-07 15:02:00.522-03,2026-02-07 15:02:00.527-03
+4291,plugins::upload.assets.update,,{},[],5,2026-02-07 15:02:00.522-03,2026-02-07 15:02:00.527-03
+4293,plugins::upload.assets.copy-link,,{},[],5,2026-02-07 15:02:00.522-03,2026-02-07 15:02:00.529-03
+4294,plugins::content-manager.explorer.create,application::auth.auth,"{""fields"": [""email"", ""token""]}","[""admin::is-creator""]",6,2026-02-07 15:02:00.538-03,2026-02-07 15:02:00.551-03
+4295,plugins::content-manager.explorer.create,application::certificate.certificate,"{""fields"": [""code"", ""trail"", ""file""]}","[""admin::is-creator""]",6,2026-02-07 15:02:00.54-03,2026-02-07 15:02:00.552-03
+4298,plugins::content-manager.explorer.create,application::checkpoints.checkpoints,"{""fields"": [""name"", ""location.x"", ""location.y"", ""estabelecimentos""]}","[""admin::is-creator""]",6,2026-02-07 15:02:00.54-03,2026-02-07 15:02:00.552-03
+4299,plugins::content-manager.explorer.create,application::trails.trails,"{""fields"": [""user"", ""inversePaths"", ""modality"", ""finishedAt"", ""startedAt"", ""routes"", ""certificate""]}","[""admin::is-creator""]",6,2026-02-07 15:02:00.54-03,2026-02-07 15:02:00.552-03
+4301,plugins::content-manager.explorer.read,application::certificate.certificate,"{""fields"": [""code"", ""trail"", ""file""]}","[""admin::is-creator""]",6,2026-02-07 15:02:00.541-03,2026-02-07 15:02:00.552-03
+4303,plugins::content-manager.explorer.read,application::checkpoints.checkpoints,"{""fields"": [""name"", ""location.x"", ""location.y"", ""estabelecimentos""]}","[""admin::is-creator""]",6,2026-02-07 15:02:00.541-03,2026-02-07 15:02:00.555-03
+4304,plugins::content-manager.explorer.read,application::trail-parts.trail-parts,"{""fields"": [""name"", ""difficulty"", ""time"", ""distance"", ""coverImage"", ""images"", ""description"", ""slug"", ""fromCheckpoint"", ""toCheckpoint""]}","[""admin::is-creator""]",6,2026-02-07 15:02:00.57-03,2026-02-07 15:02:00.583-03
+4314,plugins::content-manager.explorer.update,application::trails.trails,"{""fields"": [""user"", ""inversePaths"", ""modality"", ""finishedAt"", ""startedAt"", ""routes"", ""certificate""]}","[""admin::is-creator""]",6,2026-02-07 15:02:00.603-03,2026-02-07 15:02:00.614-03
+4324,plugins::upload.assets.update,,{},"[""admin::is-creator""]",6,2026-02-07 15:02:00.635-03,2026-02-07 15:02:00.64-03
+4329,plugins::content-manager.explorer.create,application::checkpoints.checkpoints,"{""fields"": [""name"", ""location.x"", ""location.y"", ""estabelecimentos""]}",[],4,2026-02-07 15:02:00.669-03,2026-02-07 15:02:00.681-03
+4275,plugins::content-manager.explorer.update,application::auth.auth,"{""fields"": [""email"", ""token""]}",[],5,2026-02-07 15:02:00.458-03,2026-02-07 15:02:00.469-03
+4282,plugins::content-manager.explorer.delete,application::certificate.certificate,{},[],5,2026-02-07 15:02:00.488-03,2026-02-07 15:02:00.502-03
+4290,plugins::upload.assets.create,,{},[],5,2026-02-07 15:02:00.522-03,2026-02-07 15:02:00.527-03
+4345,plugins::content-manager.explorer.update,application::checkpoints.checkpoints,"{""fields"": [""name"", ""location.x"", ""location.y"", ""estabelecimentos""]}",[],4,2026-02-07 15:02:00.709-03,2026-02-07 15:02:00.721-03
+4296,plugins::content-manager.explorer.create,application::establishment.establishment,"{""fields"": [""name"", ""address"", ""email"", ""phone"", ""category"", ""location.x"", ""location.y"", ""owner"", ""description"", ""openingHours"", ""images"", ""services"", ""isActive""]}","[""admin::is-creator""]",6,2026-02-07 15:02:00.54-03,2026-02-07 15:02:00.552-03
+4309,plugins::content-manager.explorer.update,application::certificate.certificate,"{""fields"": [""code"", ""trail"", ""file""]}","[""admin::is-creator""]",6,2026-02-07 15:02:00.572-03,2026-02-07 15:02:00.584-03
+4315,plugins::content-manager.explorer.delete,application::auth.auth,{},"[""admin::is-creator""]",6,2026-02-07 15:02:00.604-03,2026-02-07 15:02:00.615-03
+4325,plugins::upload.assets.download,,{},[],6,2026-02-07 15:02:00.636-03,2026-02-07 15:02:00.64-03
+4328,plugins::content-manager.explorer.create,application::auth.auth,"{""fields"": [""email"", ""token""]}",[],4,2026-02-07 15:02:00.669-03,2026-02-07 15:02:00.681-03
+4339,plugins::content-manager.explorer.read,application::trail-parts.trail-parts,"{""fields"": [""name"", ""difficulty"", ""time"", ""distance"", ""coverImage"", ""images"", ""description"", ""slug"", ""fromCheckpoint"", ""toCheckpoint""]}",[],4,2026-02-07 15:02:00.703-03,2026-02-07 15:02:00.714-03
+4347,plugins::content-manager.explorer.update,application::trail-route.trail-route,"{""fields"": [""trail"", ""finishedAt"", ""trackedPath"", ""route"", ""mapUrl""]}",[],4,2026-02-07 15:02:00.736-03,2026-02-07 15:02:00.747-03
+4360,plugins::email.settings.read,,{},[],4,2026-02-07 15:02:00.776-03,2026-02-07 15:02:00.787-03
+4370,plugins::upload.settings.read,,{},[],4,2026-02-07 15:02:00.808-03,2026-02-07 15:02:00.82-03
+4381,plugins::users-permissions.roles.delete,,{},[],4,2026-02-07 15:02:00.842-03,2026-02-07 15:02:00.855-03
+4392,admin::webhooks.read,,{},[],4,2026-02-07 15:02:00.876-03,2026-02-07 15:02:00.889-03
+4400,admin::roles.read,,{},[],4,2026-02-07 15:02:00.908-03,2026-02-07 15:02:00.917-03
+4276,plugins::content-manager.explorer.update,application::establishment.establishment,"{""fields"": [""name"", ""address"", ""email"", ""phone"", ""category"", ""location.x"", ""location.y"", ""owner"", ""description"", ""openingHours"", ""images"", ""services"", ""isActive""]}",[],5,2026-02-07 15:02:00.458-03,2026-02-07 15:02:00.469-03
+4287,plugins::content-manager.explorer.delete,application::trail-route.trail-route,{},[],5,2026-02-07 15:02:00.491-03,2026-02-07 15:02:00.506-03
+4297,plugins::content-manager.explorer.create,application::trail-parts.trail-parts,"{""fields"": [""name"", ""difficulty"", ""time"", ""distance"", ""coverImage"", ""images"", ""description"", ""slug"", ""fromCheckpoint"", ""toCheckpoint""]}","[""admin::is-creator""]",6,2026-02-07 15:02:00.54-03,2026-02-07 15:02:00.552-03
+4310,plugins::content-manager.explorer.update,application::checkpoints.checkpoints,"{""fields"": [""name"", ""location.x"", ""location.y"", ""estabelecimentos""]}","[""admin::is-creator""]",6,2026-02-07 15:02:00.572-03,2026-02-07 15:02:00.586-03
+4320,plugins::content-manager.explorer.delete,application::trail-route.trail-route,{},"[""admin::is-creator""]",6,2026-02-07 15:02:00.606-03,2026-02-07 15:02:00.618-03
+4331,plugins::content-manager.explorer.create,application::trail-parts.trail-parts,"{""fields"": [""name"", ""difficulty"", ""time"", ""distance"", ""coverImage"", ""images"", ""description"", ""slug"", ""fromCheckpoint"", ""toCheckpoint""]}",[],4,2026-02-07 15:02:00.669-03,2026-02-07 15:02:00.681-03
+4343,plugins::content-manager.explorer.update,application::certificate.certificate,"{""fields"": [""code"", ""trail"", ""file""]}",[],4,2026-02-07 15:02:00.706-03,2026-02-07 15:02:00.718-03
+4350,plugins::content-manager.explorer.update,plugins::users-permissions.user,"{""fields"": [""username"", ""email"", ""provider"", ""password"", ""resetPasswordToken"", ""confirmationToken"", ""confirmed"", ""blocked"", ""role"", ""birthdate"", ""avatar"", ""sex"", ""name"", ""nickname"", ""trails"", ""userType"", ""merchantApproved"", ""merchantApprovedBy"", ""merchantApprovedAt"", ""merchantRejectedReason"", ""establishments""]}",[],4,2026-02-07 15:02:00.738-03,2026-02-07 15:02:00.75-03
+4362,plugins::documentation.read,,{},[],4,2026-02-07 15:02:00.776-03,2026-02-07 15:02:00.79-03
+4372,plugins::i18n.locale.read,,{},[],4,2026-02-07 15:02:00.811-03,2026-02-07 15:02:00.823-03
+4383,plugins::users-permissions.providers.update,,{},[],4,2026-02-07 15:02:00.843-03,2026-02-07 15:02:00.855-03
+4393,admin::webhooks.update,,{},[],4,2026-02-07 15:02:00.876-03,2026-02-07 15:02:00.889-03
+4277,plugins::content-manager.explorer.update,application::checkpoints.checkpoints,"{""fields"": [""name"", ""location.x"", ""location.y"", ""estabelecimentos""]}",[],5,2026-02-07 15:02:00.458-03,2026-02-07 15:02:00.469-03
+4289,plugins::content-manager.explorer.publish,application::trail-route.trail-route,{},[],5,2026-02-07 15:02:00.491-03,2026-02-07 15:02:00.506-03
+4302,plugins::content-manager.explorer.read,application::auth.auth,"{""fields"": [""email"", ""token""]}","[""admin::is-creator""]",6,2026-02-07 15:02:00.541-03,2026-02-07 15:02:00.552-03
+4312,plugins::content-manager.explorer.update,application::trail-parts.trail-parts,"{""fields"": [""name"", ""difficulty"", ""time"", ""distance"", ""coverImage"", ""images"", ""description"", ""slug"", ""fromCheckpoint"", ""toCheckpoint""]}","[""admin::is-creator""]",6,2026-02-07 15:02:00.575-03,2026-02-07 15:02:00.587-03
+4322,plugins::upload.read,,{},"[""admin::is-creator""]",6,2026-02-07 15:02:00.609-03,2026-02-07 15:02:00.621-03
+4334,plugins::content-manager.explorer.create,application::trail-route.trail-route,"{""fields"": [""trail"", ""finishedAt"", ""trackedPath"", ""route"", ""mapUrl""]}",[],4,2026-02-07 15:02:00.672-03,2026-02-07 15:02:00.685-03
+4344,plugins::content-manager.explorer.update,application::auth.auth,"{""fields"": [""email"", ""token""]}",[],4,2026-02-07 15:02:00.706-03,2026-02-07 15:02:00.718-03
+4364,plugins::documentation.settings.regenerate,,{},[],4,2026-02-07 15:02:00.778-03,2026-02-07 15:02:00.79-03
+4373,plugins::i18n.locale.update,,{},[],4,2026-02-07 15:02:00.811-03,2026-02-07 15:02:00.823-03
+4384,plugins::users-permissions.email-templates.read,,{},[],4,2026-02-07 15:02:00.843-03,2026-02-07 15:02:00.855-03
+4394,admin::webhooks.delete,,{},[],4,2026-02-07 15:02:00.879-03,2026-02-07 15:02:00.892-03
+4305,plugins::content-manager.explorer.read,application::establishment.establishment,"{""fields"": [""name"", ""address"", ""email"", ""phone"", ""category"", ""location.x"", ""location.y"", ""owner"", ""description"", ""openingHours"", ""images"", ""services"", ""isActive""]}","[""admin::is-creator""]",6,2026-02-07 15:02:00.572-03,2026-02-07 15:02:00.583-03
+4308,plugins::content-manager.explorer.update,application::auth.auth,"{""fields"": [""email"", ""token""]}","[""admin::is-creator""]",6,2026-02-07 15:02:00.572-03,2026-02-07 15:02:00.584-03
+4317,plugins::content-manager.explorer.delete,application::checkpoints.checkpoints,{},"[""admin::is-creator""]",6,2026-02-07 15:02:00.604-03,2026-02-07 15:02:00.615-03
+4319,plugins::content-manager.explorer.delete,application::trail-parts.trail-parts,{},"[""admin::is-creator""]",6,2026-02-07 15:02:00.606-03,2026-02-07 15:02:00.617-03
+4335,plugins::content-manager.explorer.read,application::auth.auth,"{""fields"": [""email"", ""token""]}",[],4,2026-02-07 15:02:00.672-03,2026-02-07 15:02:00.685-03
+4336,plugins::content-manager.explorer.read,application::certificate.certificate,"{""fields"": [""code"", ""trail"", ""file""]}",[],4,2026-02-07 15:02:00.672-03,2026-02-07 15:02:00.685-03
+4365,plugins::upload.read,,{},[],4,2026-02-07 15:02:00.785-03,2026-02-07 15:02:00.796-03
+4366,plugins::upload.assets.create,,{},[],4,2026-02-07 15:02:00.788-03,2026-02-07 15:02:00.8-03
+4375,plugins::content-manager.single-types.configure-view,,{},[],4,2026-02-07 15:02:00.823-03,2026-02-07 15:02:00.836-03
+4376,plugins::content-manager.collection-types.configure-view,,{},[],4,2026-02-07 15:02:00.823-03,2026-02-07 15:02:00.836-03
+4385,plugins::users-permissions.email-templates.update,,{},[],4,2026-02-07 15:02:00.857-03,2026-02-07 15:02:00.871-03
+4386,plugins::users-permissions.advanced-settings.read,,{},[],4,2026-02-07 15:02:00.858-03,2026-02-07 15:02:00.872-03
+4395,admin::users.create,,{},[],4,2026-02-07 15:02:00.892-03,2026-02-07 15:02:00.905-03
+4396,admin::users.read,,{},[],4,2026-02-07 15:02:00.892-03,2026-02-07 15:02:00.905-03
+4278,plugins::content-manager.explorer.update,application::trail-route.trail-route,"{""fields"": [""trail"", ""finishedAt"", ""trackedPath"", ""route"", ""mapUrl""]}",[],5,2026-02-07 15:02:00.459-03,2026-02-07 15:02:00.469-03
+4288,plugins::content-manager.explorer.delete,application::trails.trails,{},[],5,2026-02-07 15:02:00.491-03,2026-02-07 15:02:00.506-03
+4300,plugins::content-manager.explorer.create,application::trail-route.trail-route,"{""fields"": [""trail"", ""finishedAt"", ""trackedPath"", ""route"", ""mapUrl""]}","[""admin::is-creator""]",6,2026-02-07 15:02:00.541-03,2026-02-07 15:02:00.552-03
+4311,plugins::content-manager.explorer.update,application::establishment.establishment,"{""fields"": [""name"", ""address"", ""email"", ""phone"", ""category"", ""location.x"", ""location.y"", ""owner"", ""description"", ""openingHours"", ""images"", ""services"", ""isActive""]}","[""admin::is-creator""]",6,2026-02-07 15:02:00.575-03,2026-02-07 15:02:00.587-03
+4321,plugins::content-manager.explorer.delete,application::trails.trails,{},"[""admin::is-creator""]",6,2026-02-07 15:02:00.606-03,2026-02-07 15:02:00.618-03
+4333,plugins::content-manager.explorer.create,application::trails.trails,"{""fields"": [""user"", ""inversePaths"", ""modality"", ""finishedAt"", ""startedAt"", ""routes"", ""certificate""]}",[],4,2026-02-07 15:02:00.67-03,2026-02-07 15:02:00.684-03
+4342,plugins::content-manager.explorer.read,plugins::users-permissions.user,"{""fields"": [""username"", ""email"", ""provider"", ""password"", ""resetPasswordToken"", ""confirmationToken"", ""confirmed"", ""blocked"", ""role"", ""birthdate"", ""avatar"", ""sex"", ""name"", ""nickname"", ""trails"", ""userType"", ""merchantApproved"", ""merchantApprovedBy"", ""merchantApprovedAt"", ""merchantRejectedReason"", ""establishments""]}",[],4,2026-02-07 15:02:00.706-03,2026-02-07 15:02:00.718-03
+4358,plugins::content-type-builder.read,,{},[],4,2026-02-07 15:02:00.775-03,2026-02-07 15:02:00.787-03
+4368,plugins::upload.assets.update,,{},[],4,2026-02-07 15:02:00.808-03,2026-02-07 15:02:00.82-03
+4379,plugins::users-permissions.roles.read,,{},[],4,2026-02-07 15:02:00.84-03,2026-02-07 15:02:00.852-03
+4387,admin::marketplace.plugins.install,,{},[],4,2026-02-07 15:02:00.872-03,2026-02-07 15:02:00.886-03
+4397,admin::users.update,,{},[],4,2026-02-07 15:02:00.907-03,2026-02-07 15:02:00.917-03
+4306,plugins::content-manager.explorer.read,application::trail-route.trail-route,"{""fields"": [""trail"", ""finishedAt"", ""trackedPath"", ""route"", ""mapUrl""]}","[""admin::is-creator""]",6,2026-02-07 15:02:00.572-03,2026-02-07 15:02:00.583-03
+4313,plugins::content-manager.explorer.update,application::trail-route.trail-route,"{""fields"": [""trail"", ""finishedAt"", ""trackedPath"", ""route"", ""mapUrl""]}","[""admin::is-creator""]",6,2026-02-07 15:02:00.578-03,2026-02-07 15:02:00.59-03
+4316,plugins::content-manager.explorer.delete,application::certificate.certificate,{},"[""admin::is-creator""]",6,2026-02-07 15:02:00.604-03,2026-02-07 15:02:00.615-03
+4323,plugins::upload.assets.create,,{},[],6,2026-02-07 15:02:00.609-03,2026-02-07 15:02:00.621-03
+4326,plugins::upload.assets.copy-link,,{},[],6,2026-02-07 15:02:00.636-03,2026-02-07 15:02:00.641-03
+4327,plugins::content-manager.explorer.create,application::certificate.certificate,"{""fields"": [""code"", ""trail"", ""file""]}",[],4,2026-02-07 15:02:00.669-03,2026-02-07 15:02:00.681-03
+4337,plugins::content-manager.explorer.read,application::checkpoints.checkpoints,"{""fields"": [""name"", ""location.x"", ""location.y"", ""estabelecimentos""]}",[],4,2026-02-07 15:02:00.703-03,2026-02-07 15:02:00.714-03
+4341,plugins::content-manager.explorer.read,application::trail-route.trail-route,"{""fields"": [""trail"", ""finishedAt"", ""trackedPath"", ""route"", ""mapUrl""]}",[],4,2026-02-07 15:02:00.703-03,2026-02-07 15:02:00.717-03
+4349,plugins::content-manager.explorer.update,application::trails.trails,"{""fields"": [""user"", ""inversePaths"", ""modality"", ""finishedAt"", ""startedAt"", ""routes"", ""certificate""]}",[],4,2026-02-07 15:02:00.736-03,2026-02-07 15:02:00.747-03
+4363,plugins::documentation.settings.update,,{},[],4,2026-02-07 15:02:00.778-03,2026-02-07 15:02:00.791-03
+4367,plugins::upload.assets.download,,{},[],4,2026-02-07 15:02:00.806-03,2026-02-07 15:02:00.818-03
+4374,plugins::i18n.locale.delete,,{},[],4,2026-02-07 15:02:00.812-03,2026-02-07 15:02:00.823-03
+4377,plugins::content-manager.components.configure-layout,,{},[],4,2026-02-07 15:02:00.84-03,2026-02-07 15:02:00.852-03
+4382,plugins::users-permissions.providers.read,,{},[],4,2026-02-07 15:02:00.843-03,2026-02-07 15:02:00.855-03
+4388,plugins::users-permissions.advanced-settings.update,,{},[],4,2026-02-07 15:02:00.874-03,2026-02-07 15:02:00.886-03
+4391,admin::webhooks.create,,{},[],4,2026-02-07 15:02:00.876-03,2026-02-07 15:02:00.889-03
+4399,admin::roles.create,,{},[],4,2026-02-07 15:02:00.908-03,2026-02-07 15:02:00.917-03
+4402,admin::roles.delete,,{},[],4,2026-02-07 15:02:00.909-03,2026-02-07 15:02:00.917-03
+4307,plugins::content-manager.explorer.read,application::trails.trails,"{""fields"": [""user"", ""inversePaths"", ""modality"", ""finishedAt"", ""startedAt"", ""routes"", ""certificate""]}","[""admin::is-creator""]",6,2026-02-07 15:02:00.572-03,2026-02-07 15:02:00.583-03
+4318,plugins::content-manager.explorer.delete,application::establishment.establishment,{},"[""admin::is-creator""]",6,2026-02-07 15:02:00.604-03,2026-02-07 15:02:00.617-03
+4332,plugins::content-manager.explorer.create,plugins::users-permissions.user,"{""fields"": [""username"", ""email"", ""provider"", ""password"", ""resetPasswordToken"", ""confirmationToken"", ""confirmed"", ""blocked"", ""role"", ""birthdate"", ""avatar"", ""sex"", ""name"", ""nickname"", ""trails"", ""userType"", ""merchantApproved"", ""merchantApprovedBy"", ""merchantApprovedAt"", ""merchantRejectedReason"", ""establishments""]}",[],4,2026-02-07 15:02:00.669-03,2026-02-07 15:02:00.682-03
+4340,plugins::content-manager.explorer.read,application::trails.trails,"{""fields"": [""user"", ""inversePaths"", ""modality"", ""finishedAt"", ""startedAt"", ""routes"", ""certificate""]}",[],4,2026-02-07 15:02:00.703-03,2026-02-07 15:02:00.715-03
+4348,plugins::content-manager.explorer.update,application::trail-parts.trail-parts,"{""fields"": [""name"", ""difficulty"", ""time"", ""distance"", ""coverImage"", ""images"", ""description"", ""slug"", ""fromCheckpoint"", ""toCheckpoint""]}",[],4,2026-02-07 15:02:00.736-03,2026-02-07 15:02:00.75-03
+4369,plugins::upload.assets.copy-link,,{},[],4,2026-02-07 15:02:00.808-03,2026-02-07 15:02:00.82-03
+4371,plugins::i18n.locale.create,,{},[],4,2026-02-07 15:02:00.809-03,2026-02-07 15:02:00.82-03
+4378,plugins::users-permissions.roles.create,,{},[],4,2026-02-07 15:02:00.84-03,2026-02-07 15:02:00.852-03
+4380,plugins::users-permissions.roles.update,,{},[],4,2026-02-07 15:02:00.842-03,2026-02-07 15:02:00.854-03
+4389,admin::marketplace.read,,{},[],4,2026-02-07 15:02:00.874-03,2026-02-07 15:02:00.889-03
+4390,admin::marketplace.plugins.uninstall,,{},[],4,2026-02-07 15:02:00.876-03,2026-02-07 15:02:00.889-03
+4398,admin::users.delete,,{},[],4,2026-02-07 15:02:00.908-03,2026-02-07 15:02:00.917-03
+4401,admin::roles.update,,{},[],4,2026-02-07 15:02:00.909-03,2026-02-07 15:02:00.917-03
+1,plugins::i18n.locale.read,,{},{},5,2026-02-20 17:21:05.545356-03,2026-02-20 17:21:05.545356-03
+2,plugins::i18n.locale.read,,{},{},6,2026-02-20 17:21:05.55769-03,2026-02-20 17:21:05.55769-03
+13,plugins::content-manager.explorer.delete,plugins::users-permissions.user,{},[],4,2026-02-21 23:50:23.58-03,2026-02-21 23:50:23.586-03
+3,plugins::content-manager.explorer.create,application::establishment.establishment,"{""fields"": [""name"", ""address"", ""email"", ""phone"", ""category"", ""location.x"", ""location.y"", ""owner"", ""description"", ""openingHours"", ""images"", ""services"", ""isActive"", ""rejectionReason""]}",[],4,2026-02-21 23:50:23.532-03,2026-02-21 23:50:23.553-03
+4,plugins::content-manager.explorer.read,application::establishment.establishment,"{""fields"": [""name"", ""address"", ""email"", ""phone"", ""category"", ""location.x"", ""location.y"", ""owner"", ""description"", ""openingHours"", ""images"", ""services"", ""isActive"", ""rejectionReason""]}",[],4,2026-02-21 23:50:23.534-03,2026-02-21 23:50:23.553-03
+5,plugins::content-manager.explorer.update,application::establishment.establishment,"{""fields"": [""name"", ""address"", ""email"", ""phone"", ""category"", ""location.x"", ""location.y"", ""owner"", ""description"", ""openingHours"", ""images"", ""services"", ""isActive"", ""rejectionReason""]}",[],4,2026-02-21 23:50:23.534-03,2026-02-21 23:50:23.553-03
+6,plugins::content-manager.explorer.delete,application::auth.auth,{},[],4,2026-02-21 23:50:23.535-03,2026-02-21 23:50:23.553-03
+7,plugins::content-manager.explorer.delete,application::certificate.certificate,{},[],4,2026-02-21 23:50:23.535-03,2026-02-21 23:50:23.554-03
+8,plugins::content-manager.explorer.delete,application::checkpoints.checkpoints,{},[],4,2026-02-21 23:50:23.535-03,2026-02-21 23:50:23.554-03
+9,plugins::content-manager.explorer.delete,application::establishment.establishment,{},[],4,2026-02-21 23:50:23.535-03,2026-02-21 23:50:23.554-03
+10,plugins::content-manager.explorer.delete,application::trail-parts.trail-parts,{},[],4,2026-02-21 23:50:23.535-03,2026-02-21 23:50:23.554-03
+11,plugins::content-manager.explorer.delete,application::trail-route.trail-route,{},[],4,2026-02-21 23:50:23.536-03,2026-02-21 23:50:23.554-03
+12,plugins::content-manager.explorer.delete,application::trails.trails,{},[],4,2026-02-21 23:50:23.536-03,2026-02-21 23:50:23.558-03
+14,plugins::content-manager.explorer.publish,application::trail-route.trail-route,{},[],4,2026-02-21 23:50:23.58-03,2026-02-21 23:50:23.587-03
